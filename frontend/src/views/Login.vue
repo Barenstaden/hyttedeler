@@ -79,8 +79,8 @@ export default {
   data() {
     return {
       name: null,
-      email: 'justsendto@me.com',
-      password: 'hurtiglader',
+      email: '',
+      password: '',
       signIn: false
     };
   },
