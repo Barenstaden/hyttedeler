@@ -15,9 +15,9 @@
       "type": "string"
     },
     "user": {
+      "via": "cabins",
       "plugin": "users-permissions",
-      "model": "user",
-      "via": "cabins"
+      "model": "user"
     },
     "bookings": {
       "type": "component",
@@ -28,9 +28,9 @@
       "type": "string"
     },
     "cabin_users": {
+      "via": "connected_cabins",
       "plugin": "users-permissions",
       "collection": "user",
-      "via": "connected_cabins",
       "dominant": true
     },
     "fixed_routines": {

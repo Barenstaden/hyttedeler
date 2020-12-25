@@ -1,9 +1,11 @@
 import { apolloClient } from "@/apollo";
 import queries from "@/queries/user.js";
 import store from "..";
+import axios from "axios";
 
 const state = {
   token: localStorage.getItem("token") ? localStorage.getItem("token") : "",
+  loginError: "",
   userInfo: null,
   cabins: [],
   selectedCabin: null,
@@ -12,6 +14,7 @@ const state = {
 
 const getters = {
   token: (state) => state.token,
+  loginError: (state) => state.loginError,
   userInfo: (state) => state.userInfo,
   cabins: (state) => state.cabins,
   selectedCabin: (state) => state.selectedCabin,
@@ -20,29 +23,31 @@ const getters = {
 
 const actions = {
   async register({ commit, dispatch }, userData) {
-    const { data } = await apolloClient.mutate({
-      mutation: queries.registerQuery,
-      variables: {
+    axios
+      .post("/auth/local/register", {
         email: userData.email,
         username: userData.email,
         password: userData.password,
-      },
-    });
-    if (data.register.user.id) {
-      dispatch("login", userData);
-    }
+      })
+      .then((res) => {
+        commit("setToken", res.data.jwt);
+      })
+      .catch((err) => {
+        commit("loginError", err.response.data.message[0].messages[0].message);
+      });
   },
-  async login({ commit }, userData) {
-    const { data } = await apolloClient.mutate({
-      mutation: queries.loginQuery,
-      variables: {
+  login({ commit }, userData) {
+    axios
+      .post("/auth/local", {
         identifier: userData.email,
         password: userData.password,
-      },
-    });
-    if (data.login.jwt) {
-      commit("setToken", data.login.jwt);
-    }
+      })
+      .then((res) => {
+        commit("setToken", res.data.jwt);
+      })
+      .catch((err) => {
+        commit("loginError", err.response.data.message[0].messages[0].message);
+      });
   },
   async fetchCabinInfo({ commit }) {
     const { data } = await apolloClient.query({
@@ -125,6 +130,7 @@ const mutations = {
     localStorage.setItem("token", token);
     state.token = token;
   },
+  loginError: (state, error) => (state.loginError = error),
   setUserInfo: (state, userInfo) => (state.userInfo = userInfo),
   setCabins: (state, cabins) => (state.cabins = cabins),
   setCabin: (state, cabin) => (state.selectedCabin = cabin),

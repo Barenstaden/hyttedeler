@@ -60,8 +60,8 @@
       "configurable": false
     },
     "cabins": {
-      "via": "user",
-      "collection": "cabin"
+      "collection": "cabin",
+      "via": "user"
     },
     "name": {
       "type": "string"
@@ -78,8 +78,8 @@
       "required": false
     },
     "connected_cabins": {
-      "via": "cabin_users",
-      "collection": "cabin"
+      "collection": "cabin",
+      "via": "cabin_users"
     }
   }
 }

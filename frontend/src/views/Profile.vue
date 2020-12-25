@@ -46,7 +46,7 @@
             </div>
           </div>
 
-          <b-row>
+          <b-row v-if="selectedCabin">
             <b-col md="4" offset-md="4" class="text-center">
               <md-button
                 @click="setSelectedCabin(cabin)"
@@ -62,7 +62,7 @@
             </b-col>
           </b-row>
 
-          <b-container>
+          <b-container v-if="selectedCabin">
             <b-row>
               <b-col md="6" offset-md="3" class="text-center">
                 <md-button
