@@ -1,0 +1,20 @@
+{
+  "collectionName": "components_selling_point_selling_points",
+  "info": {
+    "name": "Selling point",
+    "icon": "audio-description",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "header": {
+      "type": "string"
+    },
+    "paragraph": {
+      "type": "string"
+    },
+    "icon": {
+      "type": "string"
+    }
+  }
+}

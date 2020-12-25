@@ -1,0 +1,29 @@
+{
+  "collectionName": "components_shopping_list_shopping_lists",
+  "info": {
+    "name": "Shopping_list",
+    "icon": "shopping-basket",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "item": {
+      "type": "string"
+    },
+    "purchased": {
+      "type": "boolean",
+      "default": false
+    },
+    "purchase_date": {
+      "type": "datetime"
+    },
+    "added_by": {
+      "plugin": "users-permissions",
+      "model": "user"
+    },
+    "purchased_by": {
+      "plugin": "users-permissions",
+      "model": "user"
+    }
+  }
+}

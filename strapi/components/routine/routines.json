@@ -1,0 +1,13 @@
+{
+  "collectionName": "components_routine_routines",
+  "info": {
+    "name": "Routines",
+    "icon": "list"
+  },
+  "options": {},
+  "attributes": {
+    "name": {
+      "type": "string"
+    }
+  }
+}

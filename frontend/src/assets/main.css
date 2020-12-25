@@ -1,0 +1,21 @@
+.m-top {
+  margin-top: 30px;
+}
+.m-top-lg {
+  margin-top: 50px;
+}
+.m-bottom {
+  margin-bottom: 30px;
+}
+.m-bottom-lg {
+  margin-bottom: 50px;
+}
+.m-right-sm {
+  margin-right: 15px;
+}
+.m-left-sm {
+  margin-left: 15px;
+}
+.text-center {
+  text-align: center;
+}

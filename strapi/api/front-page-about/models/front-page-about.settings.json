@@ -1,0 +1,26 @@
+{
+  "kind": "singleType",
+  "collectionName": "front_page_abouts",
+  "info": {
+    "name": "front page about",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "header": {
+      "type": "string"
+    },
+    "secondary_header": {
+      "type": "string"
+    },
+    "selling_points": {
+      "type": "component",
+      "repeatable": true,
+      "component": "selling-point.selling-point"
+    }
+  }
+}

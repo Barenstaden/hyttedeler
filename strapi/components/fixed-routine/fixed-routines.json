@@ -1,0 +1,13 @@
+{
+  "collectionName": "components_fixed_routine_fixed_routines",
+  "info": {
+    "name": "Fixed_routines",
+    "icon": "align-left"
+  },
+  "options": {},
+  "attributes": {
+    "name": {
+      "type": "string"
+    }
+  }
+}

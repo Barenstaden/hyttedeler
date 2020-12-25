@@ -1,0 +1,47 @@
+{
+  "kind": "collectionType",
+  "collectionName": "cabins",
+  "info": {
+    "name": "cabin",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "user": {
+      "plugin": "users-permissions",
+      "model": "user",
+      "via": "cabins"
+    },
+    "bookings": {
+      "type": "component",
+      "repeatable": true,
+      "component": "booking.booking"
+    },
+    "about": {
+      "type": "string"
+    },
+    "cabin_users": {
+      "plugin": "users-permissions",
+      "collection": "user",
+      "via": "connected_cabins",
+      "dominant": true
+    },
+    "fixed_routines": {
+      "type": "component",
+      "repeatable": true,
+      "component": "fixed-routine.fixed-routines"
+    },
+    "shopping_list": {
+      "type": "component",
+      "repeatable": true,
+      "component": "shopping-list.shopping-list"
+    }
+  }
+}

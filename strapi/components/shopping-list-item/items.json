@@ -1,0 +1,19 @@
+{
+  "collectionName": "components_shopping_list_item_items",
+  "info": {
+    "name": "items",
+    "icon": "shopping-cart"
+  },
+  "options": {},
+  "attributes": {
+    "item": {
+      "type": "string"
+    },
+    "purchased": {
+      "type": "boolean"
+    },
+    "purchase_date": {
+      "type": "datetime"
+    }
+  }
+}

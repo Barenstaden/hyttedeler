@@ -1,0 +1,34 @@
+{
+  "kind": "singleType",
+  "collectionName": "front_pages",
+  "info": {
+    "name": "Front page"
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "main_header": {
+      "type": "string"
+    },
+    "secondary_header": {
+      "type": "string"
+    },
+    "main_button": {
+      "type": "string"
+    },
+    "background": {
+      "model": "file",
+      "via": "related",
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos"
+      ],
+      "plugin": "upload",
+      "required": false
+    }
+  }
+}
