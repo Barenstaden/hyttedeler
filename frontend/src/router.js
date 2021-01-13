@@ -4,7 +4,7 @@ import Router from "vue-router";
 Vue.use(Router);
 
 export default new Router({
-  mode: 'history',
+  mode: "history",
   routes: [
     {
       path: "/",
@@ -14,7 +14,7 @@ export default new Router({
     {
       path: "/login",
       name: "Login",
-      component: () => import("./views/Login.vue")
+      component: () => import("./views/Login.vue"),
     },
     {
       path: "/profil",
@@ -22,31 +22,41 @@ export default new Router({
       component: () => import("./views/Profile.vue"),
       children: [
         {
-          path: 'kalender',
+          path: "hytter",
+          name: "Hytter",
+          component: () => import("./components/cabin/Cabins.vue"),
+        },
+        {
+          path: "kalender",
           name: "Kalender",
-          component: () => import("./components/cabin/Calendar.vue")
+          component: () => import("./components/cabin/Calendar.vue"),
         },
         {
-          path: 'handleliste',
+          path: "handleliste",
           name: "Handleliste",
-          component: () => import("./components/cabin/ShoppingList.vue")
+          component: () => import("./components/cabin/ShoppingList.vue"),
         },
         {
-          path: 'om-hytta',
+          path: "om-hytta",
           name: "Om hytta",
-          component: () => import("./components/cabin/About.vue")
+          component: () => import("./components/cabin/About.vue"),
         },
         {
-          path: 'faste-rutiner',
+          path: "faste-rutiner",
           name: "Faste rutiner",
-          component: () => import("./components/cabin/FixedRoutines.vue")
-        }
-      ]
-    }
+          component: () => import("./components/cabin/FixedRoutines.vue"),
+        },
+        {
+          path: "tilgang",
+          name: "Tilgang",
+          component: () => import("./components/cabin/UserAccess.vue"),
+        },
+      ],
+    },
   ],
   scrollBehavior: (to, from) => {
     if (from.matched[0] && from.matched[0].name != to.matched[0].name) {
       return { x: 0, y: 0 };
     }
-  }
+  },
 });

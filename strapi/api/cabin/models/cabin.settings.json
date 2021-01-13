@@ -14,10 +14,10 @@
     "name": {
       "type": "string"
     },
-    "user": {
-      "via": "cabins",
+    "owner": {
       "plugin": "users-permissions",
-      "model": "user"
+      "model": "user",
+      "via": "owned_cabins"
     },
     "bookings": {
       "type": "component",
@@ -26,12 +26,6 @@
     },
     "about": {
       "type": "string"
-    },
-    "cabin_users": {
-      "via": "connected_cabins",
-      "plugin": "users-permissions",
-      "collection": "user",
-      "dominant": true
     },
     "fixed_routines": {
       "type": "component",
@@ -42,6 +36,18 @@
       "type": "component",
       "repeatable": true,
       "component": "shopping-list.shopping-list"
+    },
+    "not_approved_users": {
+      "plugin": "users-permissions",
+      "collection": "user",
+      "via": "cabins_awaiting_approval",
+      "dominant": true
+    },
+    "users": {
+      "plugin": "users-permissions",
+      "collection": "user",
+      "via": "cabins",
+      "dominant": true
     }
   }
 }

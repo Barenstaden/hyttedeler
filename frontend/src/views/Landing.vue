@@ -1,31 +1,40 @@
 <template>
   <div class="wrapper" v-if="frontPageContent">
-    <parallax class="section page-header header-filter" :style="headerStyle">
+    <parallax class="section page-header">
+      <div id="landingPageBackgroundVideo">
+        <video autoplay muted loop>
+          <source :src="frontPageContent.background.url" type="video/mp4" />
+        </video>
+      </div>
       <div class="container">
         <div class="md-layout">
           <div
             class="md-layout-item md-size-50 md-small-size-70 md-xsmall-size-100"
           >
-            <h1 class="title">{{frontPageContent.main_header}}</h1>
+            <h1 class="title">{{ frontPageContent.main_header }}</h1>
             <h4>
-              {{frontPageContent.secondary_header}}
+              {{ frontPageContent.secondary_header }}
             </h4>
             <br />
 
-            <md-button v-if="!token"
+            <md-button
+              v-if="!token"
               to="/login"
               class="md-success md-round md-lg"
-              >{{frontPageContent.main_button}}</md-button>
+              >{{ frontPageContent.main_button }}</md-button
+            >
 
-            <md-button v-if="token"
+            <md-button
+              v-if="token"
               to="/profil/kalender"
               class="md-success md-round md-lg"
-              >Gå til oversikt</md-button>
+              >Gå til oversikt</md-button
+            >
           </div>
         </div>
       </div>
     </parallax>
-    
+
     <div class="main main-raised" v-if="frontPageAbout">
       <div class="section">
         <div class="container">
@@ -41,8 +50,11 @@
           </div>
           <div class="features text-center">
             <div class="md-layout">
-              <div class="md-layout-item md-medium-size-33 md-small-size-100" v-for="sellingPoint in frontPageAbout.selling_points" :key="sellingPoint.header">
-                
+              <div
+                class="md-layout-item md-medium-size-33 md-small-size-100"
+                v-for="sellingPoint in frontPageAbout.selling_points"
+                :key="sellingPoint.header"
+              >
                 <div class="info">
                   <div class="icon icon-info">
                     <md-icon>{{ sellingPoint.icon }}</md-icon>
@@ -52,7 +64,6 @@
                     {{ sellingPoint.paragraph }}
                   </p>
                 </div>
-
               </div>
             </div>
           </div>
@@ -63,37 +74,41 @@
 </template>
 
 <script>
-import { mapActions, mapGetters } from 'vuex';
+import { mapActions, mapGetters } from "vuex";
 export default {
   bodyClass: "landing-page",
   data() {
     return {
       name: null,
       email: null,
-      message: null
+      message: null,
     };
   },
-  created(){
-    this.fetchFrontPageContent()
-    this.fetchFrontPageAbout()
+  created() {
+    this.fetchFrontPageContent();
+    this.fetchFrontPageAbout();
   },
   methods: {
-    ...mapActions(['fetchFrontPageContent', 'fetchFrontPageAbout'])
+    ...mapActions(["fetchFrontPageContent", "fetchFrontPageAbout"]),
   },
   computed: {
-    ...mapGetters(['frontPageContent', 'frontPageAbout', 'token']),
-    headerStyle() {
-      if(!this.frontPageContent) return ''
-      console.log(this.frontPageContent.background.url);
-      return {
-        backgroundImage: `url(${this.frontPageContent.background.url})`
-      };
-    }
-  }
+    ...mapGetters(["frontPageContent", "frontPageAbout", "token"]),
+  },
 };
 </script>
 
 <style lang="scss" scoped>
+#landingPageBackgroundVideo video {
+  object-fit: cover;
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+.page-header {
+  height: 80vh;
+}
 .md-card-actions.text-center {
   display: flex;
   justify-content: center !important;

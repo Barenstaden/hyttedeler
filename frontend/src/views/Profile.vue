@@ -19,7 +19,7 @@
                   />
                   <img
                     v-else
-                    src="@/assets/img/faces/card-profile1-square.jpg"
+                    src="@/assets/img/faces/cabin.jpeg"
                     alt="Standardbilde"
                     class="img-raised rounded-circle profile-image img-fluid"
                   />
@@ -39,57 +39,101 @@
                       >
                     </md-field>
                   </form>
+                  <b-alert variant="danger" show v-if="!userInfo.name">
+                    <h5 v-if="!userInfo.name">
+                      <strong>Legg til navn for å komme i gang.</strong>
+                    </h5>
+                    <span v-if="!selectedCabin">
+                      Om du ikke er hytteier kan du legge inn koden du har fått
+                      fra en hytteeier etter å ha trykket på "legg til
+                      hytte"</span
+                    >
+                  </b-alert>
 
-                  <h6>Hytteeier</h6>
+                  <md-button
+                    v-if="userInfo.name"
+                    class="md-primary mb-5"
+                    @click="addCabin = !addCabin"
+                    >Opprette en ny hytte</md-button
+                  >
+                  <md-button
+                    v-if="userInfo.name"
+                    class="md-primary mb-5"
+                    @click="joinCabinForm = !joinCabinForm"
+                    >Få tilgang til en hytte</md-button
+                  >
+
+                  <form @submit.prevent="submitCreateCabin" v-if="addCabin">
+                    <md-field>
+                      <label for="name">Navn på hytta</label>
+                      <md-input type="text" v-model="cabinName"></md-input>
+                    </md-field>
+
+                    <md-field>
+                      <label for="aboutCabin">Om hytta</label>
+                      <md-textarea
+                        md-autogrow
+                        v-model="cabinDescription"
+                      ></md-textarea>
+                    </md-field>
+
+                    <md-button type="submit" class="md-success md-round"
+                      >Lagre hytte</md-button
+                    >
+                  </form>
+
+                  <form v-if="joinCabinForm" @submit.prevent="submitJoinCabin">
+                    <md-field :class="joinCabinError ? 'md-invalid' : ''">
+                      <label for="">Hytte-id</label>
+                      <md-input
+                        v-model="joinCabinId"
+                        type="number"
+                        required
+                      ></md-input>
+                      <span class="md-error">{{ joinCabinError }}</span>
+                    </md-field>
+                    <md-button
+                      class="md-primary md-round mt-4 mb-5"
+                      type="submit"
+                      >Koble til hytte</md-button
+                    >
+                  </form>
+
+                  <b-alert show variant="success" v-if="cabinJoined">
+                    Din forespørsel er sendt til godkjenning! Du vil få tilgang
+                    på alle funksjoner når forespørselen er godkjent.
+                  </b-alert>
                 </div>
               </div>
             </div>
           </div>
 
-          <b-row v-if="selectedCabin">
-            <b-col md="4" offset-md="4" class="text-center">
-              <md-button
-                @click="setSelectedCabin(cabin)"
-                class="md-round"
-                :class="
-                  cabin.name == selectedCabin.name ? 'md-primary' : 'md-accent'
-                "
-                v-for="(cabin, index) in cabins"
-                :key="cabin.name"
-              >
-                {{ cabin.name ? cabin.name : "Hytte  " + (index + 1) }}
-              </md-button>
+          <b-row v-if="cabinsAwaitingApproval && cabinsAwaitingApproval.length">
+            <b-col md="6" offset-md="3" class="mb-5">
+              <h3 class="text-center">
+                Hytter som venter godkjenning fra eier
+              </h3>
+              <b-list-group>
+                <b-list-group-item
+                  v-for="cabin in cabinsAwaitingApproval"
+                  :key="cabin.id"
+                >
+                  Hytte-id: {{ cabin.id }} · {{ cabin.name }}
+                </b-list-group-item>
+              </b-list-group>
             </b-col>
           </b-row>
 
-          <b-container v-if="selectedCabin">
-            <b-row>
-              <b-col md="6" offset-md="3" class="text-center">
-                <md-button
-                  to="/profil/om-hytta"
-                  class="md-round m-right-sm m-left-sm"
-                  :class="isActive('/profil/om-hytta')"
-                  >Om hytta</md-button
-                >
-                <md-button
-                  to="/profil/kalender"
-                  class="md-round m-right-sm"
-                  :class="isActive('/profil/kalender')"
-                  >Kalender</md-button
-                >
-                <md-button
-                  to="/profil/handleliste"
-                  class="md-round"
-                  :class="isActive('/profil/handleliste')"
-                  >Handleliste</md-button
-                >
-              </b-col>
-            </b-row>
-          </b-container>
-
-          <div class="row">
-            <b-col md="6" offset-md="3">
+          <b-row class="mt-5" v-if="selectedCabin && selectedCabin.name">
+            <b-col md="" offset-md="">
               <md-tabs md-sync-route class="md-primary" md-alignment="centered">
+                <md-tab
+                  to="/profil/hytter"
+                  :md-label="selectedCabin.name"
+                  md-icon="expand_more"
+                >
+                </md-tab>
+
                 <md-tab
                   to="/profil/om-hytta"
                   md-label="Om hytta"
@@ -117,11 +161,19 @@
                   md-icon="list"
                 >
                 </md-tab>
+
+                <md-tab
+                  v-if="userInfo.id == selectedCabin.owner.id"
+                  to="/profil/tilgang"
+                  md-label="Tilgang"
+                  md-icon="lock"
+                >
+                </md-tab>
               </md-tabs>
             </b-col>
 
             <router-view />
-          </div>
+          </b-row>
 
           <modal v-if="saved">
             <template slot="header">
@@ -163,6 +215,12 @@ export default {
   data() {
     return {
       changeName: false,
+      addCabin: false,
+      joinCabinForm: false,
+      joinCabinId: null,
+      selectCabin: "",
+      cabinName: "",
+      cabinDescription: "",
     };
   },
   props: {
@@ -174,21 +232,41 @@ export default {
   created() {
     this.fetchUserInfo();
     this.fetchCabinInfo();
+    setInterval(() => {
+      this.fetchCabinInfo(this.selectedCabin.name);
+    }, 30000);
   },
   methods: {
-    ...mapActions(["fetchUserInfo", "fetchCabinInfo", "saveUserInfo"]),
-    setSelectedCabin(cabin) {
-      this.$store.commit("setCabin", cabin);
-    },
+    ...mapActions([
+      "fetchUserInfo",
+      "fetchCabinInfo",
+      "saveUserInfo",
+      "createCabin",
+      "joinCabin",
+    ]),
     closeModal() {
       this.$store.commit("saved", false);
     },
     isActive(path) {
       return this.$route.path == path ? "md-primary" : "md-accent";
     },
+    submitCreateCabin() {
+      this.createCabin({ name: this.cabinName, desc: this.cabinDescription });
+    },
+    submitJoinCabin() {
+      this.joinCabin(this.joinCabinId);
+    },
   },
   computed: {
-    ...mapGetters(["cabins", "selectedCabin", "userInfo", "saved"]),
+    ...mapGetters([
+      "cabins",
+      "cabinsAwaitingApproval",
+      "selectedCabin",
+      "userInfo",
+      "saved",
+      "joinCabinError",
+      "cabinJoined",
+    ]),
     headerStyle() {
       return {
         backgroundImage: `url(${this.header})`,
@@ -196,11 +274,17 @@ export default {
     },
   },
   watch: {
-    selectedCabin() {
-      console.log(this.selectedCabin);
-    },
     saved() {
       this.changeName = false;
+      this.addCabin = false;
+      this.joinCabinId = false;
+    },
+    selectedCabin() {
+      // if (this.$route.path.includes("om-hytta")) return;
+      // this.$router.push("/profil/om-hytta");
+    },
+    cabinJoined() {
+      this.joinCabinForm = false;
     },
   },
 };

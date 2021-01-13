@@ -2,14 +2,18 @@ import { apolloClient } from "@/apollo";
 import queries from "@/queries/user.js";
 import store from "..";
 import axios from "axios";
+import { VariablesInAllowedPositionRule } from "graphql";
 
 const state = {
   token: localStorage.getItem("token") ? localStorage.getItem("token") : "",
   loginError: "",
   userInfo: null,
   cabins: [],
+  cabinsAwaitingApproval: [],
   selectedCabin: null,
   saved: false,
+  joinCabinError: "",
+  cabinJoined: false,
 };
 
 const getters = {
@@ -17,8 +21,11 @@ const getters = {
   loginError: (state) => state.loginError,
   userInfo: (state) => state.userInfo,
   cabins: (state) => state.cabins,
+  cabinsAwaitingApproval: (state) => state.cabinsAwaitingApproval,
   selectedCabin: (state) => state.selectedCabin,
   saved: (state) => state.saved,
+  joinCabinError: (state) => state.joinCabinError,
+  cabinJoined: (state) => state.cabinJoined,
 };
 
 const actions = {
@@ -49,16 +56,97 @@ const actions = {
         commit("loginError", err.response.data.message[0].messages[0].message);
       });
   },
-  async fetchCabinInfo({ commit }) {
+  async createCabin({ commit, dispatch }, cabinInfo) {
+    const { data } = await apolloClient.mutate({
+      mutation: queries.createCabinQuery,
+      variables: {
+        name: cabinInfo.name,
+        about: cabinInfo.desc,
+        owner: state.userInfo.id,
+        users: [state.userInfo.id],
+      },
+    });
+    if (data.createCabin.cabin) {
+      dispatch("fetchCabinInfo", cabinInfo.name);
+    }
+  },
+  async joinCabin({ commit }, id) {
+    const cabin = await getCabinById(id);
+    if (cabin.data.cabin) {
+      var isMember = cabin.data.cabin.not_approved_users.some(
+        (user) => user.id == state.userInfo.id
+      );
+      if (!isMember) {
+        isMember = cabin.data.cabin.users.some(
+          (user) => user.id == state.userInfo.id
+        );
+      }
+
+      if (isMember) {
+        commit("joinCabinError", "Du er allerede medlem av denne hytta");
+        return;
+      } else {
+        var cabinUsers = arrayOfUserIds(cabin.data.cabin.not_approved_users);
+        cabinUsers.push(state.userInfo.id);
+      }
+
+      const { data } = await apolloClient.mutate({
+        mutation: queries.joinCabinQuery,
+        variables: {
+          id: cabin.data.cabin.id,
+          not_approved_users: cabinUsers,
+        },
+      });
+      if (data.updateCabin.cabin) commit("setCabinJoined");
+    } else {
+      commit(
+        "joinCabinError",
+        "Ingen hytte funnet. Sjekk at du har fått riktig hytte-id"
+      );
+    }
+  },
+  async approveUser({ commit }) {
+    const data = await apolloClient.mutate({
+      mutation: queries.updateApprovedUsersQuery,
+      variables: {
+        id: state.selectedCabin.id,
+        users: arrayOfUserIds(state.selectedCabin.users),
+        not_approved_users: arrayOfUserIds(
+          state.selectedCabin.not_approved_users
+        ),
+      },
+    });
+    console.log(data);
+  },
+  async fetchCabinInfo({ commit }, selectedCabin) {
     const { data } = await apolloClient.query({
       query: queries.cabinQuery,
+      fetchPolicy: "network-only",
     });
-    commit("setCabins", data.self.cabins);
-    commit("setCabin", data.self.cabins[0]);
+    if (data.self.cabins) {
+      commit("setCabins", data.self.cabins);
+      if (selectedCabin) {
+        const newCabin = data.self.cabins.find(
+          (findCabin) => (findCabin.name = selectedCabin)
+        );
+        commit("setCabin", newCabin);
+      } else if (state.selectedCabin) {
+        const newCabin = data.self.cabins.find(
+          (findCabin) => (findCabin.name = state.selectedCabin.name)
+        );
+        commit("setCabin", newCabin);
+      } else {
+        commit("setCabin", data.self.cabins[0]);
+      }
+    }
+    if (data.self.cabins_awaiting_approval) {
+      commit("setCabinsAwaitingApproval", data.self.cabins_awaiting_approval);
+    }
   },
   async fetchUserInfo({ commit }) {
     const { data } = await apolloClient.query({
       query: queries.userQuery,
+      fetchPolicy: "network-only",
     });
     commit("setUserInfo", data.self);
   },
@@ -106,6 +194,20 @@ const actions = {
     });
     console.log(data);
   },
+  async updateBookings({ commit, dispatch }) {
+    cleanQueryData("selectedCabin", "bookings");
+    const { data } = await apolloClient.mutate({
+      mutation: queries.updateBookingsQuery,
+      variables: {
+        id: state.selectedCabin.id,
+        bookings: state.selectedCabin.bookings,
+      },
+    });
+    if (data.updateCabin) {
+      dispatch("fetchCabinInfo", state.selectedCabin.id);
+      commit("saved", true);
+    }
+  },
 };
 
 // To update component
@@ -116,6 +218,7 @@ const cleanQueryData = (prop, array) => {
       if (item[key] && item[key].__typename) {
         delete item[key].__typename;
       }
+
       // Remove userdata
       if (item[key] && item[key].name && item[key].id) {
         item[key] = item[key].id;
@@ -123,6 +226,23 @@ const cleanQueryData = (prop, array) => {
     });
     delete item.__typename;
   });
+};
+
+const getCabinById = async (id) => {
+  return await apolloClient.query({
+    query: queries.cabinByIdQuery,
+    variables: {
+      id: id,
+    },
+  });
+};
+
+const arrayOfUserIds = (array) => {
+  var users = [];
+  array.forEach((user) => {
+    users.push(user.id);
+  });
+  return users;
 };
 
 const mutations = {
@@ -133,6 +253,8 @@ const mutations = {
   loginError: (state, error) => (state.loginError = error),
   setUserInfo: (state, userInfo) => (state.userInfo = userInfo),
   setCabins: (state, cabins) => (state.cabins = cabins),
+  setCabinsAwaitingApproval: (state, cabins) =>
+    (state.cabinsAwaitingApproval = cabins),
   setCabin: (state, cabin) => (state.selectedCabin = cabin),
   signOut: (state) => {
     Object.keys(state).forEach((key) => {
@@ -148,6 +270,8 @@ const mutations = {
       state.saved = false;
     }, 2000);
   },
+  joinCabinError: (state, error) => (state.joinCabinError = error),
+  setCabinJoined: (state) => (state.cabinJoined = true),
 };
 
 export default {
