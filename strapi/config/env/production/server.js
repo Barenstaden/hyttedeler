@@ -4,7 +4,7 @@ module.exports = ({ env }) => ({
   url: "https://hyttedeler.no/s/",
   admin: {
     auth: {
-      secret: env("ADMIN_JWT_SECRET", "fe6f6f3fc13244b95fd312a5c4880c46"),
+      secret: env("ADMIN_JWT_SECRET", ""),
     },
   },
 });
