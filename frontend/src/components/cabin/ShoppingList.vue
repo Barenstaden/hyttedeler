@@ -57,6 +57,7 @@
               @mouseover="hover = item.item"
               v-for="item in purchasedItems"
               :key="item.item"
+              style="text-decoration: line-through;"
               >{{ item.item }}
               <md-checkbox
                 class="float-right"

@@ -8,7 +8,7 @@
   >
     <div class="md-toolbar-row md-collapse-lateral">
       <div class="md-toolbar-section-start">
-        <router-link to='/'><h3 class="md-title">Hyttedeler</h3></router-link>
+        <router-link to="/"><h3 class="md-title">Hyttedeler</h3></router-link>
       </div>
       <div class="md-toolbar-section-end">
         <md-button
@@ -27,7 +27,6 @@
               <!-- Here you can add your items from the section-start of your toolbar -->
             </mobile-menu>
             <md-list>
-
               <md-list-item v-if="!token" to="/login" target="_blank">
                 <i class="material-icons">content_paste</i>
                 <p>Kom i gang</p>
@@ -44,9 +43,10 @@
                         slot="title"
                         class="md-button md-button-link md-white md-simple"
                         data-toggle="dropdown"
+                        v-if="selectedCabin"
                       >
                         <i class="material-icons">expand_more</i>
-                        <p>Min hytte</p>
+                        <p>{{ selectedCabin.name }}</p>
                       </md-button>
                       <ul class="dropdown-menu dropdown-with-icons">
                         <li>
@@ -79,8 +79,6 @@
                   Logg ut
                 </md-button>
               </md-list-item>
-
-
             </md-list>
           </div>
         </div>
@@ -104,34 +102,34 @@ function resizeThrottler(actualResizeHandler) {
 }
 
 import MobileMenu from "@/layout/MobileMenu";
-import { mapGetters } from 'vuex';
+import { mapGetters } from "vuex";
 export default {
   components: {
-    MobileMenu
+    MobileMenu,
   },
   props: {
     type: {
       type: String,
-      default: "white"
+      default: "white",
     },
     colorOnScroll: {
       type: Number,
-      default: 0
-    }
+      default: 0,
+    },
   },
   data() {
     return {
       extraNavClasses: "",
-      toggledClass: false
+      toggledClass: false,
     };
   },
   computed: {
-    ...mapGetters(['token'])
+    ...mapGetters(["token", "selectedCabin"]),
   },
   methods: {
-    signOut(){
-      this.$store.commit('signOut')
-      this.$router.push('/')
+    signOut() {
+      this.$store.commit("signOut");
+      this.$router.push("/");
     },
     bodyClick() {
       let bodyClick = document.getElementById("bodyClick");
@@ -176,13 +174,13 @@ export default {
       if (element_id) {
         element_id.scrollIntoView({ block: "end", behavior: "smooth" });
       }
-    }
+    },
   },
   mounted() {
     document.addEventListener("scroll", this.scrollListener);
   },
   beforeDestroy() {
     document.removeEventListener("scroll", this.scrollListener);
-  }
+  },
 };
 </script>
