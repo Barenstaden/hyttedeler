@@ -3,11 +3,19 @@ const BundleAnalyzerPlugin = require("webpack-bundle-analyzer")
   .BundleAnalyzerPlugin;
 
 module.exports = {
+  chainWebpack(config) {
+    config.plugins.delete("prefetch");
+    config.plugin("preload").tap((options) => {
+      options[0].include = "allChunks";
+      return options;
+    });
+    config.plugin("CompressionPlugin").use(CompressionPlugin);
+  },
   configureWebpack: {
     output: {
       crossOriginLoading: "anonymous",
     },
-    plugins: [new CompressionPlugin(), new BundleAnalyzerPlugin()],
+    plugins: [new BundleAnalyzerPlugin()],
   },
   devServer: {
     proxy: {
