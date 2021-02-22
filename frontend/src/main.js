@@ -15,17 +15,18 @@
 import Vue from "vue";
 import App from "./App.vue";
 import router from "./router";
-import Vuex from 'vuex'
+import Vuex from "vuex";
 import store from "./store";
 import apolloProvider from "./apollo";
-import { BootstrapVue } from 'bootstrap-vue'
-import 'bootstrap/dist/css/bootstrap.css'
-import 'bootstrap-vue/dist/bootstrap-vue.css'
-import AnimateCSS from 'animate.css';
+import { LayoutPlugin, ListGroupPlugin } from "bootstrap-vue";
+Vue.use(LayoutPlugin);
+Vue.use(ListGroupPlugin);
+import "bootstrap/dist/css/bootstrap.css";
+import "bootstrap-vue/dist/bootstrap-vue.css";
+import AnimateCSS from "animate.css";
 Vue.use(AnimateCSS);
-Vue.use(BootstrapVue)
 
-Vue.use(Vuex)
+Vue.use(Vuex);
 
 import MaterialKit from "./plugins/material-kit";
 
@@ -33,25 +34,25 @@ Vue.config.productionTip = false;
 
 Vue.use(MaterialKit);
 
-import VCalendar from 'v-calendar';
+import VCalendar from "v-calendar";
 
 Vue.use(VCalendar);
 
 const NavbarStore = {
-  showNavbar: false
+  showNavbar: false,
 };
 
 Vue.mixin({
   data() {
     return {
-      NavbarStore
+      NavbarStore,
     };
-  }
+  },
 });
 
 new Vue({
   router,
   store,
   apolloProvider,
-  render: h => h(App)
+  render: (h) => h(App),
 }).$mount("#app");

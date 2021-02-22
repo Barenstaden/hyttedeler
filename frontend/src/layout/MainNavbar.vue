@@ -27,7 +27,7 @@
               <!-- Here you can add your items from the section-start of your toolbar -->
             </mobile-menu>
             <md-list>
-              <md-list-item v-if="!token" to="/login" target="_blank">
+              <md-list-item v-if="!token" to="/login">
                 <i class="material-icons">content_paste</i>
                 <p>Kom i gang</p>
               </md-list-item>

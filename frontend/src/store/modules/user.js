@@ -116,7 +116,6 @@ const actions = {
         ),
       },
     });
-    console.log(data);
   },
   async fetchCabinInfo({ commit }, selectedCabin) {
     const { data } = await apolloClient.query({
@@ -151,7 +150,6 @@ const actions = {
     commit("setUserInfo", data.self);
   },
   async saveUserInfo({ commit }) {
-    console.log(state.userInfo);
     const { data } = await apolloClient.mutate({
       mutation: queries.updateUserInfoQuery,
       variables: {
@@ -181,7 +179,6 @@ const actions = {
         shopping_list: state.selectedCabin.shopping_list,
       },
     });
-    console.log(data);
   },
   async updateFixedRoutines({ commit }) {
     cleanQueryData("selectedCabin", "fixed_routines");
@@ -192,7 +189,6 @@ const actions = {
         routines: state.selectedCabin.fixed_routines,
       },
     });
-    console.log(data);
   },
   async updateBookings({ commit, dispatch }) {
     cleanQueryData("selectedCabin", "bookings");

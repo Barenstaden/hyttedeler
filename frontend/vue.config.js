@@ -1,4 +1,14 @@
+const CompressionPlugin = require("compression-webpack-plugin");
+const BundleAnalyzerPlugin = require("webpack-bundle-analyzer")
+  .BundleAnalyzerPlugin;
+
 module.exports = {
+  configureWebpack: {
+    output: {
+      crossOriginLoading: "anonymous",
+    },
+    plugins: [new CompressionPlugin(), new BundleAnalyzerPlugin()],
+  },
   devServer: {
     proxy: {
       "": {
@@ -14,6 +24,11 @@ module.exports = {
       css: {
         sourceMap: process.env.NODE_ENV !== "production" ? true : false,
       },
+    },
+  },
+  pluginOptions: {
+    webpack: {
+      dir: ["./webpack"],
     },
   },
 };
