@@ -4,39 +4,45 @@ const BundleAnalyzerPlugin = require("webpack-bundle-analyzer")
 
 module.exports = {
   chainWebpack(config) {
-    config.plugins.delete("prefetch");
-    config.plugin("preload").tap((options) => {
-      options[0].include = "allChunks";
-      return options;
-    });
-    config.plugin("CompressionPlugin").use(CompressionPlugin);
+    // config.plugins.delete("prefetch");
+    // config.plugin("preload").tap((options) => {
+    //   options[0].include = "allChunks";
+    //   return options;
+    // });
+    // config.plugin("CompressionPlugin").use(CompressionPlugin);
   },
+
   configureWebpack: {
     output: {
-      crossOriginLoading: "anonymous",
-    },
-    plugins: [new BundleAnalyzerPlugin()],
+      crossOriginLoading: "anonymous"
+    }
+    // plugins: [new BundleAnalyzerPlugin()],
   },
+
   devServer: {
     proxy: {
       "": {
-        target: "http://localhost:1337",
+        target: "http://localhost:1337"
       },
       connect: {
-        target: "http://localhost:1337",
-      },
-    },
+        target: "http://localhost:1337"
+      }
+    }
   },
+
   css: {
     loaderOptions: {
       css: {
-        sourceMap: process.env.NODE_ENV !== "production" ? true : false,
-      },
-    },
+        sourceMap: process.env.NODE_ENV !== "production" ? true : false
+      }
+    }
   },
+
   pluginOptions: {
     webpack: {
-      dir: ["./webpack"],
-    },
+      dir: ["./webpack"]
+    }
   },
+
+  transpileDependencies: ["vuetify"]
 };

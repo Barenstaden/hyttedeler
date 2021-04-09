@@ -1,27 +1,26 @@
 <template>
-  <div id="material-kit">
-    <div :class="{ 'nav-open': NavbarStore.showNavbar }">
-      <Navigation/>
-      <div>
-        <router-view />
-      </div>
-      <Footer/>
-    </div>
-  </div>
+  <v-app>
+    <Navigation />
+    <LoginModal />
+    <v-main>
+      <SideMenu />
+      <SuccessMessage />
+      <router-view />
+    </v-main>
+  </v-app>
 </template>
 
 <script>
-import Navigation from "@/layout/MainNavbar.vue"
-import Footer from "@/layout/MainFooter.vue"
-
-export default {
-  components: {
-    Navigation,
-    Footer
-  }
-}
+  export default {
+    name: 'App',
+    components: {
+      Navigation: () => import('@/components/app/Navigation.vue'),
+      SideMenu: () => import('@/components/app/SideMenu.vue'),
+      LoginModal: () => import('@/components/app/LoginModal.vue'),
+      SuccessMessage: () => import('@/components/app/SuccessMessage.vue'),
+    },
+    data: () => ({
+      //
+    }),
+  };
 </script>
-
-<style>
-
-</style>

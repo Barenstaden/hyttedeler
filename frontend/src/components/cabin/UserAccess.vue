@@ -62,7 +62,7 @@ export default {
       this.selectedCabin.users.push(user);
       this.selectedCabin.not_approved_users.splice(
         this.selectedCabin.not_approved_users.findIndex(
-          (cabinUser) => cabinUser.id == user.id
+          cabinUser => cabinUser.id == user.id
         ),
         1
       );
@@ -72,7 +72,7 @@ export default {
       this.selectedCabin.not_approved_users.push(user);
       this.selectedCabin.users.splice(
         this.selectedCabin.users.findIndex(
-          (cabinUser) => cabinUser.id == user.id
+          cabinUser => cabinUser.id == user.id
         ),
         1
       );
@@ -81,16 +81,16 @@ export default {
     submitDeleteUser(user) {
       this.selectedCabin.not_approved_users.splice(
         this.selectedCabin.not_approved_users.findIndex(
-          (cabinUser) => cabinUser.id == user.id
+          cabinUser => cabinUser.id == user.id
         ),
         1
       );
       this.approveUser();
-    },
+    }
   },
   computed: {
-    ...mapGetters(["selectedCabin", "userInfo"]),
-  },
+    ...mapGetters(["selectedCabin", "userInfo"])
+  }
 };
 </script>
 

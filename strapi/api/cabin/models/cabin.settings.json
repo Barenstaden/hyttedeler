@@ -48,6 +48,26 @@
       "collection": "user",
       "via": "cabins",
       "dominant": true
+    },
+    "image": {
+      "model": "file",
+      "via": "related",
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos"
+      ],
+      "plugin": "upload",
+      "required": false
+    },
+    "location": {
+      "type": "enumeration",
+      "enum": [
+        "sea",
+        "mountain",
+        "lake"
+      ],
+      "default": "mountain"
     }
   }
 }

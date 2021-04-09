@@ -4,18 +4,18 @@ import VueApollo from "vue-apollo";
 
 export const apolloClient = new ApolloClient({
   uri: "/graphql",
-  request: (operation) => {
+  request: operation => {
     const token = localStorage.getItem("token")
       ? { Authorization: `Bearer ${localStorage.getItem("token")}` }
       : "";
     operation.setContext({
-      headers: token,
+      headers: token
     });
-  },
+  }
 });
 
 const apolloProvider = new VueApollo({
-  defaultClient: apolloClient,
+  defaultClient: apolloClient
 });
 
 Vue.use(VueApollo);

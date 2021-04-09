@@ -1,4 +1,4 @@
-import gql from "graphql-tag";
+import gql from 'graphql-tag';
 
 const registerQuery = gql`
   mutation register($email: String!, $username: String!, $password: String!) {
@@ -85,9 +85,13 @@ const updateApprovedUsersQuery = gql`
   }
 `;
 
-const cabinQuery = gql`
+const userQuery = gql`
   query {
     self {
+      name
+      image {
+        url
+      }
       id
       cabins_awaiting_approval {
         name
@@ -99,6 +103,10 @@ const cabinQuery = gql`
         about
         owner {
           id
+        }
+        location
+        image {
+          url
         }
         users {
           name
@@ -133,18 +141,6 @@ const cabinQuery = gql`
         fixed_routines {
           name
         }
-      }
-    }
-  }
-`;
-
-const userQuery = gql`
-  query {
-    self {
-      id
-      name
-      image {
-        url
       }
     }
   }
@@ -233,7 +229,6 @@ export default {
   cabinByIdQuery,
   joinCabinQuery,
   updateApprovedUsersQuery,
-  cabinQuery,
   userQuery,
   updateUserInfoQuery,
   updateCabinAboutQuery,

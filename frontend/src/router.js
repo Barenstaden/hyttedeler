@@ -1,57 +1,67 @@
-import Vue from "vue";
-import Router from "vue-router";
+import Vue from 'vue';
+import Router from 'vue-router';
 
 Vue.use(Router);
 
 export default new Router({
-  mode: "history",
+  mode: 'history',
   routes: [
     {
-      path: "/",
-      name: "Hjem",
-      component: () => import("./views/Landing.vue"),
+      path: '/',
+      name: 'Hjem',
+      component: () => import('./views/Home.vue'),
     },
     {
-      path: "/login",
-      name: "Login",
-      component: () => import("./views/Login.vue"),
+      path: '/login',
+      name: 'Login',
+      component: () => import('./views/Login.vue'),
     },
     {
-      path: "/profil",
-      name: "Profil",
-      component: () => import("./views/Profile.vue"),
+      path: '/cabins',
+      name: 'Mine hytter',
+      component: () => import('./views/Cabins.vue'),
+    },
+    {
+      path: '/cabins/:cabin/',
+      name: 'Hytte',
+      component: () => import('./views/Cabin.vue'),
       children: [
         {
-          path: "hytter",
-          name: "Hytter",
-          component: () => import("./components/cabin/Cabins.vue"),
+          path: '',
+          name: 'Oversikt',
+          component: () => import('./components/cabin/Overview.vue'),
         },
         {
-          path: "kalender",
-          name: "Kalender",
-          component: () => import("./components/cabin/Calendar.vue"),
+          path: 'calendar',
+          name: 'Kalender',
+          component: () => import('./components/cabin/Calendar.vue'),
         },
         {
-          path: "handleliste",
-          name: "Handleliste",
-          component: () => import("./components/cabin/ShoppingList.vue"),
+          path: 'shopping-list',
+          name: 'Handleliste',
+          component: () => import('./components/cabin/ShoppingList.vue'),
         },
         {
-          path: "om-hytta",
-          name: "Om hytta",
-          component: () => import("./components/cabin/About.vue"),
+          path: 'about',
+          name: 'Om hytta',
+          component: () => import('./components/cabin/About.vue'),
         },
         {
-          path: "faste-rutiner",
-          name: "Faste rutiner",
-          component: () => import("./components/cabin/FixedRoutines.vue"),
+          path: 'routines',
+          name: 'Faste rutiner',
+          component: () => import('./components/cabin/FixedRoutines.vue'),
         },
         {
-          path: "tilgang",
-          name: "Tilgang",
-          component: () => import("./components/cabin/UserAccess.vue"),
+          path: 'access',
+          name: 'Tilgang',
+          component: () => import('./components/cabin/UserAccess.vue'),
         },
       ],
+    },
+    {
+      path: '/profil',
+      name: 'Profil',
+      component: () => import('./views/Profile.vue'),
     },
   ],
   scrollBehavior: (to, from) => {

@@ -11,7 +11,7 @@ const frontPageContentQuery = gql`
       }
     }
   }
-`
+`;
 
 const frontPageAboutQuery = gql`
   query {
@@ -25,7 +25,7 @@ const frontPageAboutQuery = gql`
       }
     }
   }
-`
+`;
 
 const loginPageContentQuery = gql`
   query {
@@ -35,10 +35,10 @@ const loginPageContentQuery = gql`
       }
     }
   }
-`
+`;
 
 export default {
   frontPageContentQuery,
   frontPageAboutQuery,
   loginPageContentQuery
-}
+};

@@ -1,162 +1,211 @@
 <template>
-  <b-container v-if="selectedCabin" class="m-bottom-lg">
-    <b-row>
-      <b-col md="6" offset-md="3" v-if="!selectedCabin.shopping_list">
-        <p>Begynn å legge til ting i handlelisten 📝</p>
-      </b-col>
-      <b-col md="6" offset-md="3" v-if="selectedCabin.shopping_list">
-        <h3>🛒 Handleliste</h3>
-
-        <form class="m-bottom" @submit.prevent="submitAddItemToShoppingList">
-          <md-field :class="alreadyInList">
-            <label for="item">Legg til vare 🍫</label>
-            <md-input type="text" v-model="item" required></md-input>
-            <span class="md-error">Varen finnes allerede</span>
-            <md-button type="submit" class="md-primary md-round md-sm"
-              >Legg til</md-button
-            >
-          </md-field>
-        </form>
-
-        <p v-if="!selectedCabin.shopping_list.length">
-          Hytta skal være fylt opp med det som trengs 🍫
-        </p>
-        <b-list-group>
-          <transition-group
-            enter-active-class="animate__animated animate__flipInX"
-            leave-to-class="animate__animated animate__flipOutX animate__faster"
+  <v-card v-if="cabin" max-width="420" class="mx-auto mt-10" tile>
+    <!-- Headers -->
+    <v-card-title>
+      🛒 Handleliste
+    </v-card-title>
+    <v-list-item>
+      <v-list-item-content>
+        <v-form class="mb-3" @submit.prevent="addItem">
+          <v-text-field
+            outlined
+            clearable
+            label="Legg til vare 🍫"
+            type="text"
+            @click:append-outer="addItem"
+            append-outer-icon="mdi-plus"
+            v-model="item"
+            hint="Trykk enter eller + for å legge til"
           >
-            <b-list-group-item
-              v-for="item in shoppingList"
-              :key="item.item"
-              @mouseover="hover = item.item"
-              >{{ item.item }}
-              <md-checkbox
-                class="float-right"
-                @change="itemControl(item)"
-                v-model="purchasedItems"
-                :value="item"
-              ></md-checkbox>
-              <md-button
-                v-if="hover == item.item"
-                style="margin-top: -2px; margin-right: 20px"
-                class="md-primary md-sm md-round float-right padding"
-                @click="deleteItem(item.item)"
-                >Slett</md-button
-              ></b-list-group-item
-            >
-          </transition-group>
-        </b-list-group>
+          </v-text-field>
+          <p class="caption red--text mt-n2 ml-3" v-if="alreadyInList">
+            Varen finnes allerede i handlelisten
+          </p>
+        </v-form>
+      </v-list-item-content>
+    </v-list-item>
 
-        <h3>✅ Fullført</h3>
-        <b-list-group>
-          <transition-group
-            enter-active-class="animate__animated animate__flipInX"
-          >
-            <b-list-group-item
-              @mouseover="hover = item.item"
-              v-for="item in purchasedItems"
-              :key="item.item"
-              style="text-decoration: line-through;"
-              >{{ item.item }}
-              <md-checkbox
-                class="float-right"
-                @change="itemControl(item)"
-                v-model="purchasedItems"
-                :value="item"
-              ></md-checkbox>
-              <md-button
-                v-if="hover == item.item"
-                style="margin-top: -2px; margin-right: 20px"
-                class="md-primary md-sm md-round float-right padding"
-                @click="deleteItem(item.item)"
-                >Slett</md-button
-              >
-            </b-list-group-item>
-          </transition-group>
-        </b-list-group>
-      </b-col>
-    </b-row>
-  </b-container>
+    <v-divider></v-divider>
+
+    <transition-group
+      enter-active-class="animate__animated animate__flipInX"
+      leave-to-class="animate__animated animate__flipOutX animate__faster"
+    >
+      <v-list-item
+        v-for="item in shoppingList"
+        :key="item.item"
+        @mouseover="hover = item.item"
+      >
+        <v-list-item-content>
+          <v-list-item-title>{{ item.item }}</v-list-item-title>
+        </v-list-item-content>
+        <v-list-item-action>
+          <v-checkbox
+            @change="itemControl(item)"
+            v-model="purchasedItems"
+            :value="item"
+          ></v-checkbox>
+        </v-list-item-action>
+        <v-btn
+          v-if="edit"
+          x-small
+          rounded
+          color="error"
+          @click="deleteItem(item.item)"
+          >Slett</v-btn
+        >
+      </v-list-item>
+    </transition-group>
+
+    <v-card-title>
+      ✅ Fullført
+    </v-card-title>
+
+    <transition-group enter-active-class="animate__animated animate__flipInX">
+      <v-list-item
+        @mouseover="hover = item.item"
+        v-for="item in purchasedItems"
+        :key="item.item"
+      >
+        <v-list-item-content style="text-decoration: line-through;">
+          {{ item.item }}
+        </v-list-item-content>
+        <v-list-item-action>
+          <v-checkbox
+            @change="itemControl(item)"
+            v-model="purchasedItems"
+            :value="item"
+          ></v-checkbox>
+        </v-list-item-action>
+        <v-btn
+          v-if="edit"
+          style="text-decoration: none;"
+          x-small
+          rounded
+          color="error"
+          @click="deleteItem(item.item)"
+          >Slett</v-btn
+        >
+      </v-list-item>
+    </transition-group>
+    <v-list-item class="mt-0">
+      <v-btn x-small rounded color="primary" @click="edit = !edit">
+        <span v-if="!edit">
+          Rediger handleliste
+        </span>
+        <span v-else>Ferdig</span>
+      </v-btn>
+    </v-list-item>
+  </v-card>
 </template>
 
 <script>
-import { mapActions, mapGetters } from "vuex";
-export default {
-  data() {
-    return {
-      purchased: "",
-      hover: "test",
-      checked: true,
-      item: "",
-      alreadyInList: false,
-      audio: new Audio(require("@/assets/audio/complete.mp3")),
-    };
-  },
-  created() {
-    this.fetchCabinInfo();
-  },
-  methods: {
-    ...mapActions(["fetchCabinInfo", "updateShoppingList"]),
-    submitAddItemToShoppingList() {
-      if (
-        !this.selectedCabin.shopping_list.some(
-          (item) => item.item.toLowerCase() == this.item.toLowerCase()
-        )
-      ) {
-        this.selectedCabin.shopping_list.unshift({
-          item: this.item,
-          added_by: this.userInfo.id,
-        });
-        this.alreadyInList = "";
-        this.updateShoppingList();
-      } else {
-        this.alreadyInList = "md-invalid";
-      }
+  import { mapActions, mapGetters } from 'vuex';
+  import gql from 'graphql-tag';
+  import axios from 'axios';
+  export default {
+    data() {
+      return {
+        purchased: '',
+        edit: false,
+        checked: true,
+        item: '',
+        alreadyInList: false,
+        audio: new Audio(require('@/assets/audio/complete.mp3')),
+      };
     },
-    deleteItem(itemToRemove) {
-      this.selectedCabin.shopping_list.splice(
-        this.selectedCabin.shopping_list.findIndex(
-          (item) => item.item == itemToRemove
-        ),
-        1
-      );
-      this.updateShoppingList();
-    },
-    itemControl(itemToEdit) {
-      itemToEdit.purchased = !itemToEdit.purchased;
-      if (itemToEdit.purchased) this.audio.play();
-      const index = this.selectedCabin.shopping_list.findIndex(
-        (item) => item.item == itemToEdit.item
-      );
-      this.selectedCabin.shopping_list.splice(index, 1);
-      this.selectedCabin.shopping_list.unshift(itemToEdit);
-      this.updateShoppingList();
-    },
-  },
-  computed: {
-    ...mapGetters(["selectedCabin", "userInfo"]),
-    shoppingList() {
-      return this.selectedCabin.shopping_list.filter((item) => !item.purchased);
-    },
-    purchasedItems: {
-      get() {
-        return this.selectedCabin.shopping_list.filter(
-          (item) => item.purchased
-        );
+    apollo: {
+      cabin: {
+        query: gql`
+          query cabin($id: ID!) {
+            cabin(id: $id) {
+              id
+              shopping_list {
+                item
+                added_by {
+                  name
+                  id
+                }
+                purchased
+                purchased_by {
+                  id
+                  name
+                }
+                purchase_date
+                id
+              }
+            }
+          }
+        `,
+        variables() {
+          return {
+            id: this.$route.params.cabin,
+          };
+        },
       },
-      set() {},
     },
-  },
-  watch: {
-    "selectedCabin.shopping_list"() {
-      if (
-        this.selectedCabin.shopping_list.some((item) => item.item == this.item)
-      )
-        this.item = "";
+    methods: {
+      ...mapActions(['updateCabin']),
+      addItem() {
+        if (!this.item) return;
+        if (
+          !this.cabin.shopping_list.some(
+            (item) => item.item.toLowerCase() == this.item.toLowerCase(),
+          )
+        ) {
+          this.cabin.shopping_list.unshift({
+            item: this.item,
+            added_by: this.userInfo.id,
+          });
+          this.alreadyInList = false;
+          this.updateShoppingList();
+
+          this.item = null;
+        } else {
+          this.alreadyInList = true;
+        }
+      },
+      deleteItem(itemToRemove) {
+        this.cabin.shopping_list = this.cabin.shopping_list.filter(
+          (item) => item.item != itemToRemove,
+        );
+        this.updateShoppingList();
+      },
+      itemControl(itemToEdit) {
+        itemToEdit.purchased = !itemToEdit.purchased;
+        if (itemToEdit.purchased) this.audio.play();
+        const index = this.cabin.shopping_list.findIndex(
+          (item) => item.item == itemToEdit.item,
+        );
+        this.cabin.shopping_list.splice(index, 1);
+        this.cabin.shopping_list.unshift(itemToEdit);
+        this.updateShoppingList();
+      },
+      async updateShoppingList() {
+        const response = await this.updateCabin({
+          shopping_list: this.cabin.shopping_list,
+        });
+        if (response) this.cabin.shopping_list = response.shopping_list;
+      },
     },
-  },
-};
+    computed: {
+      ...mapGetters(['selectedCabin', 'userInfo', 'token']),
+      shoppingList() {
+        return this.cabin.shopping_list.filter((item) => !item.purchased);
+      },
+      purchasedItems: {
+        get() {
+          return this.cabin.shopping_list.filter((item) => item.purchased);
+        },
+        set() {},
+      },
+    },
+    watch: {
+      item() {
+        this.alreadyInList = false;
+      },
+    },
+  };
 </script>
 
 <style></style>

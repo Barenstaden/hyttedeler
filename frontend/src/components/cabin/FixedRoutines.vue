@@ -1,111 +1,150 @@
 <template>
-  <b-container v-if="selectedCabin">
-    <b-row>
-      <b-col md="6" offset-md="3" class="m-bottom-lg">
-        <h3>Faste rutiner</h3>
-
-        <form class="m-bottom" @submit.prevent="submitAddRoutine">
-          <md-field :class="alreadyInList">
-            <label for="item">Legg til en rutine 👮🏼‍♀️</label>
-            <md-input type="text" v-model="routine" required></md-input>
-            <span class="md-error">Varen finnes allerede</span>
-            <md-button type="submit" class="md-primary md-round md-sm"
-              >Legg til</md-button
-            >
-          </md-field>
-        </form>
-
-        <b-list-group>
-          <draggable
-            v-model="selectedCabin.fixed_routines"
-            @change="updateFixedRoutines"
-          >
+  <v-container v-if="cabin">
+    <v-row justify="center">
+      <v-col md="6" class="m-bottom-lg">
+        <v-card>
+          <v-card-title>
+            Faste rutiner
+          </v-card-title>
+          <v-list-item>
+            <v-list-item-content>
+              <v-form @submit.prevent="addRoutine">
+                <v-text-field
+                  outlined
+                  clearable
+                  label="Legg til en rutine"
+                  type="text"
+                  @click:append-outer="addRoutine"
+                  append-outer-icon="mdi-plus"
+                  v-model="routine"
+                  hint="Trykk enter eller + for å legge til"
+                >
+                </v-text-field>
+              </v-form>
+            </v-list-item-content>
+          </v-list-item>
+          <draggable v-model="cabin.fixed_routines">
             <transition-group
               enter-active-class="animate__animated animate__flipInX"
               leave-to-class="animate__animated animate__flipOutX animate__faster"
             >
-              <b-list-group-item
-                style="cursor: grab"
-                @mouseover="hover = item.name"
-                v-for="item in selectedCabin.fixed_routines"
-                :key="item.name"
+              <v-list-item
+                v-for="(routine, i) in cabin.fixed_routines"
+                :key="i"
               >
-                {{ item.name }}
-                <md-button
-                  v-if="hover == item.name"
-                  style="margin-top: -2px"
-                  class="md-primary md-sm md-round float-right padding"
-                  @click="deleteRoutine(item.name)"
-                  >Slett</md-button
+                <v-list-item-content>
+                  <v-list-item-title>
+                    {{ i + 1 }}. {{ routine.name }}
+                  </v-list-item-title>
+                </v-list-item-content>
+                <v-btn
+                  v-if="edit"
+                  float
+                  x-small
+                  rounded
+                  color="error"
+                  @click="deleteRoutine(routine)"
+                  >Slett</v-btn
                 >
-              </b-list-group-item>
+              </v-list-item>
             </transition-group>
           </draggable>
-        </b-list-group>
-
-        <p v-if="!selectedCabin.fixed_routines.length">
-          Du har ingen faste rutiner 👷🏼‍♀️
-        </p>
-        <p v-else>Dra oppgavene for å endre rekkefølge ⚙️</p>
-      </b-col>
-    </b-row>
-  </b-container>
+          <v-list-item>
+            <span v-if="!cabin.fixed_routines.length">
+              Du har ingen faste rutiner 👷🏼‍♀️
+            </span>
+            <span class="font-weight-bold" v-else>
+              Dra oppgavene for å endre rekkefølge ⚙️
+            </span>
+          </v-list-item>
+          <v-list-item class="mt-0">
+            <v-btn x-small rounded color="primary" @click="edit = !edit">
+              <span v-if="!edit">
+                Rediger faste rutiner
+              </span>
+              <span v-else>Ferdig</span>
+            </v-btn>
+          </v-list-item>
+        </v-card>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <script>
-import { mapActions, mapGetters } from "vuex";
-import draggable from "vuedraggable";
-export default {
-  components: {
-    draggable,
-  },
-  data() {
-    return {
-      routine: "",
-      alreadyInList: false,
-      hover: "",
-    };
-  },
-  methods: {
-    ...mapActions(["updateFixedRoutines"]),
-    submitAddRoutine() {
-      if (
-        !this.selectedCabin.fixed_routines.some(
-          (routine) => routine.name.toLowerCase() == this.routine.toLowerCase()
-        )
-      ) {
-        this.selectedCabin.fixed_routines.unshift({ name: this.routine });
-        this.alreadyInList = "";
+  import { mapActions, mapGetters } from 'vuex';
+  import draggable from 'vuedraggable';
+  import gql from 'graphql-tag';
+  import axios from 'axios';
+  export default {
+    components: {
+      draggable,
+    },
+    data() {
+      return {
+        routine: '',
+        alreadyInList: false,
+        edit: false,
+      };
+    },
+    apollo: {
+      cabin: {
+        query: gql`
+          query cabin($id: ID!) {
+            cabin(id: $id) {
+              id
+              fixed_routines {
+                name
+                id
+              }
+            }
+          }
+        `,
+        variables() {
+          return {
+            id: this.$route.params.cabin,
+          };
+        },
+      },
+    },
+    methods: {
+      ...mapActions(['updateCabin']),
+      addRoutine() {
+        if (
+          !this.cabin.fixed_routines.some(
+            (routine) =>
+              routine.name.toLowerCase() == this.routine.toLowerCase(),
+          )
+        ) {
+          this.cabin.fixed_routines.unshift({ name: this.routine });
+          this.alreadyInList = '';
+          this.updateFixedRoutines();
+          this.routine = '';
+        } else {
+          this.alreadyInList = true;
+          this.routine = '';
+        }
+      },
+      deleteRoutine(routineToRemove) {
+        this.cabin.fixed_routines.splice(
+          this.cabin.fixed_routines.findIndex(
+            (routine) => routine.name == routineToRemove,
+          ),
+          1,
+        );
         this.updateFixedRoutines();
-      } else {
-        this.alreadyInList = "md-invalid";
-        this.routine = "";
-      }
+      },
+      async updateFixedRoutines() {
+        const response = await this.updateCabin({
+          fixed_routines: this.cabin.fixed_routines,
+        });
+        this.cabin.fixed_routines = response.fixed_routines
+      },
     },
-    deleteRoutine(routineToRemove) {
-      this.selectedCabin.fixed_routines.splice(
-        this.selectedCabin.fixed_routines.findIndex(
-          (routine) => routine.name == routineToRemove
-        ),
-        1
-      );
-      this.updateFixedRoutines();
+    computed: {
+      ...mapGetters(['token']),
     },
-  },
-  computed: {
-    ...mapGetters(["selectedCabin"]),
-  },
-  watch: {
-    "selectedCabin.fixed_routines"() {
-      if (
-        this.selectedCabin.fixed_routines.some(
-          (routine) => routine.name == this.routine
-        )
-      )
-        this.routine = "";
-    },
-  },
-};
+  };
 </script>
 
 <style></style>

@@ -53,7 +53,7 @@ export default {
   data() {
     return {
       edit: false,
-      openEditForm: false,
+      openEditForm: false
     };
   },
   created() {
@@ -68,17 +68,17 @@ export default {
     ...mapActions(["updateCabinAbout"]),
     submitUpdateCabinAbout() {
       this.updateCabinAbout();
-    },
+    }
   },
   computed: {
-    ...mapGetters(["selectedCabin", "userInfo"]),
+    ...mapGetters(["selectedCabin", "userInfo"])
   },
   watch: {
     selectedCabin() {
       if (!this.selectedCabin.name && !this.selectedCabin.about)
         this.openEditForm = true;
-    },
-  },
+    }
+  }
 };
 </script>
 

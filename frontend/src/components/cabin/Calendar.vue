@@ -1,157 +1,205 @@
 <template>
-  <b-container>
-    <b-row>
-      <b-col class="text-center">
-        <h3>Oversikt over besøk</h3>
-        <p v-if="!selectedCabin.bookings.length">
-          Her vises oversikten over brukere som har booket tid. Legg inn en dato
-          for når du skal på hytta neste gang. Start ved å trykke på en dato.
-        </p>
-        <b-row align-h="center" class="m-bottom">
-          <b-badge
-            :style="{ 'background-color': userColor(user) }"
-            pill
-            v-for="user in users"
-            :key="user"
-          >
-            {{ user }}
-          </b-badge>
-        </b-row>
+  <v-container v-if="cabin">
+    <v-row justify="center">
+      <v-sheet>
+        <v-toolbar flat>
+          <v-btn icon class="ma-2" @click="$refs.calendar.prev()">
+            <v-icon>mdi-chevron-left</v-icon>
+          </v-btn>
 
-        <v-date-picker
-          class="m-bottom-lg"
-          :attributes="attributes"
-          v-model="range"
-          is-range
-          :rows="3"
-          :model-config="modelConfig"
-          :columns="$screens({ default: 1, md: 2, lg: 3 })"
-        />
-      </b-col>
-    </b-row>
-    <transition
-      enter-active-class="animate__animated animate__fadeInUp animate__faster"
-      leave-active-class="animate__animated animate__fadeOutDown animate__faster"
-    >
-      <b-row id="dateRangeConfirm" shadow v-if="range.start && range.end">
-        <b-col md="6" offset-md="3">
-          <h4><strong>Valgte datoer</strong></h4>
-          <p>
-            <strong>Fra {{ range.start }}</strong>
-          </p>
-          <p>
-            <strong>Til {{ range.end }}</strong>
-          </p>
-          <b-row>
-            <md-button class="md-success md-round" @click="submitSaveBooking"
-              >Lagre datoer</md-button
+          <v-toolbar-title v-if="$refs.calendar">
+            {{ $refs.calendar.title }}
+          </v-toolbar-title>
+
+          <v-toolbar-title v-else>
+            {{ currentMonth }}
+          </v-toolbar-title>
+
+          <v-btn icon class="ma-2" @click="$refs.calendar.next()">
+            <v-icon>mdi-chevron-right</v-icon>
+          </v-btn>
+        </v-toolbar>
+      </v-sheet>
+    </v-row>
+    <v-row>
+      <v-calendar
+        interval-height="100"
+        ref="calendar"
+        type="month"
+        mode="stack"
+        v-model="value"
+        :events="filteredBookings"
+        @click:date="addBooking"
+        @click:event="showEvent"
+      >
+      </v-calendar>
+
+      <v-menu
+        v-model="selectedOpen"
+        :close-on-content-click="false"
+        :activator="selectedElement"
+        offset-x
+      >
+        <v-card
+          v-if="selectedBooking"
+          color="grey lighten-4"
+          min-width="350px"
+          flat
+        >
+          <v-toolbar>
+            <v-toolbar-title
+              v-html="selectedBooking.user.name"
+            ></v-toolbar-title>
+            <v-spacer></v-spacer>
+          </v-toolbar>
+          <v-card-text>
+            {{ prettifyTime(selectedBooking.start) }} -
+            {{ prettifyTime(selectedBooking.end) }}
+          </v-card-text>
+          <v-card-actions>
+            <v-btn small rounded color="primary" @click="selectedOpen = false">
+              Lukk
+            </v-btn>
+            <v-btn
+              small
+              rounded
+              color="error"
+              @click="deleteBooking(selectedBooking.id)"
             >
-            <md-button class="md-primary md-round" @click="removeDates"
-              >Avbryt</md-button
-            >
-          </b-row>
-        </b-col>
-      </b-row>
-    </transition>
-  </b-container>
+              Slett
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-menu>
+    </v-row>
+    <v-row justify="end">
+      <v-btn
+        :disabled="!selectedStart && !selectedEnd"
+        small
+        rounded
+        class="success mt-4 mr-3"
+        @click="updateBookings(cabin.bookings)"
+        >Lagre</v-btn
+      >
+      <v-btn small rounded class="error mt-4" @click="addBooking(null)"
+        >Fjern valg</v-btn
+      >
+    </v-row>
+  </v-container>
 </template>
 
 <script>
-import { mapActions, mapGetters } from "vuex";
-
-export default {
-  data() {
-    return {
-      colors: ["green", "orange", "blue", "purple"],
-      users: [],
-      range: {
-        start: "",
-        end: "",
-      },
-      modelConfig: {
-        type: "string",
-        mask: "YYYY-MM-DDTHH:mm:ssXXX",
-        timeAdjust: "12:00:00",
-      },
-    };
-  },
-  created() {
-    if (!this.selectedCabin) this.fetchCabinInfo();
-    else this.setUsers();
-  },
-  methods: {
-    ...mapActions(["fetchCabinInfo", "updateBookings"]),
-    setUsers() {
-      if (!this.selectedCabin.bookings) return;
-      this.selectedCabin.bookings.filter((booking) => {
-        if (booking.user.name && !this.users.includes(booking.user.name)) {
-          this.users.push(booking.user.name);
+  import gql from 'graphql-tag';
+  import moment from 'moment';
+  import { mapActions, mapGetters } from 'vuex';
+  import axios from 'axios';
+  export default {
+    data() {
+      return {
+        selectedOpen: false,
+        selectedBooking: null,
+        selectedElement: null,
+        value: '',
+        currentMonth: moment().format('MMMM YYYY'),
+        selectedStart: null,
+        selectedEnd: null,
+      };
+    },
+    methods: {
+      ...mapActions(['updateCabin']),
+      addBooking(date) {
+        if (!date) {
+          this.selectedStart = null;
+          this.selectedEnd = null;
         }
-      });
+        if (!this.selectedStart && !this.selectedEnd && date) {
+          this.selectedStart = moment(date.date);
+          this.selectedEnd = moment(date.date);
+        } else if (
+          this.selectedStart &&
+          moment(date.date).isAfter(this.selectedStart)
+        ) {
+          this.selectedEnd = moment(date.date);
+        } else if (
+          this.selectedStart &&
+          moment(date.date).isBefore(this.selectedStart)
+        ) {
+          this.selectedStart = moment(date.date);
+        }
+        this.cabin.bookings = this.cabin.bookings.filter(
+          (booking) => !booking.new,
+        );
+        if (this.selectedStart && this.selectedEnd) {
+          this.cabin.bookings.push({
+            start: this.selectedStart,
+            end: this.selectedEnd,
+            user: this.userInfo,
+            new: true,
+          });
+        }
+      },
+      async updateBookings(bookings) {
+        const response = await this.updateCabin({
+          bookings: bookings,
+        });
+        this.cabin.bookings = response.bookings;
+        this.addBooking(null);
+      },
+      deleteBooking(id) {
+        const bookings = this.cabin.bookings.filter(
+          (booking) => booking.id != id,
+        );
+        this.updateBookings(bookings);
+        this.selectedOpen = false;
+      },
+      showEvent({ nativeEvent, event }) {
+        this.selectedBooking = event;
+        this.selectedElement = nativeEvent.target;
+        this.selectedOpen = true;
+      },
     },
-    userColor(name) {
-      return this.colors[this.users.findIndex((user) => user == name)];
-    },
-    submitSaveBooking() {
-      this.selectedCabin.bookings.push({
-        start: this.range.start,
-        end: this.range.end,
-        user: this.userInfo.id,
-      });
-      this.updateBookings();
-    },
-    removeDates() {
-      this.range.start = "";
-      this.range.end = "";
-    },
-  },
-  computed: {
-    ...mapGetters(["selectedCabin", "cabins", "userInfo", "saved"]),
-    attributes() {
-      if (!this.selectedCabin) return null;
-      return this.selectedCabin.bookings.map((booking) => {
-        if (booking.user.id) {
+    apollo: {
+      cabin: {
+        query: gql`
+          query cabin($id: ID!) {
+            cabin(id: $id) {
+              id
+              name
+              location
+              image {
+                url
+              }
+              bookings {
+                id
+                start
+                end
+                user {
+                  id
+                  name
+                }
+              }
+            }
+          }
+        `,
+        variables() {
           return {
-            highlight: this.userColor(booking.user.name),
-            popover: {
-              label: booking.user.name,
-            },
-            dates: booking,
+            id: this.$route.params.cabin,
           };
-        }
-      });
+        },
+      },
     },
-  },
-  watch: {
-    selectedCabin() {
-      if (this.selectedCabin && this.selectedCabin.bookings) this.setUsers();
+    computed: {
+      ...mapGetters(['userInfo', 'token']),
+      filteredBookings() {
+        return this.cabin.bookings.filter((booking) => {
+          booking.start = moment(booking.start).format('YYYY-MM-DD');
+          booking.end = moment(booking.end).format('YYYY-MM-DD');
+          booking.name = booking.user.name;
+          return booking;
+        });
+      },
     },
-    saved() {
-      if (this.saved) {
-        this.range.start = "";
-        this.range.end = "";
-      }
-    },
-  },
-};
+  };
 </script>
 
-<style>
-.user-dot {
-  background-color: red;
-  height: 20px;
-  width: 20px;
-}
-#dateRangeConfirm {
-  height: auto;
-  padding: 20px;
-  width: 100vw;
-  position: fixed;
-  bottom: 0;
-  right: 0;
-  left: 0;
-  background-color: #fff;
-  z-index: 99999;
-  margin: auto;
-}
-</style>
+<style></style>

@@ -1,59 +1,41 @@
-import { apolloClient } from "@/apollo";
-import queries from "@/queries/user.js";
-import store from "..";
-import axios from "axios";
-import { VariablesInAllowedPositionRule } from "graphql";
+import { apolloClient } from '@/apollo';
+import queries from '@/queries/user.js';
+import axios from 'axios';
 
 const state = {
-  token: localStorage.getItem("token") ? localStorage.getItem("token") : "",
-  loginError: "",
+  token: localStorage.getItem('token') ? localStorage.getItem('token') : '',
   userInfo: null,
-  cabins: [],
-  cabinsAwaitingApproval: [],
   selectedCabin: null,
-  saved: false,
-  joinCabinError: "",
-  cabinJoined: false,
+  successMessage: '',
+  error: false,
+  loginModal: false,
+  registerModal: false,
+  sideMenu: true,
 };
 
 const getters = {
   token: (state) => state.token,
-  loginError: (state) => state.loginError,
   userInfo: (state) => state.userInfo,
-  cabins: (state) => state.cabins,
-  cabinsAwaitingApproval: (state) => state.cabinsAwaitingApproval,
   selectedCabin: (state) => state.selectedCabin,
-  saved: (state) => state.saved,
-  joinCabinError: (state) => state.joinCabinError,
-  cabinJoined: (state) => state.cabinJoined,
+  successMessage: (state) => state.successMessage,
+  error: (state) => state.error,
+  loginModal: (state) => state.loginModal,
+  sideMenu: (state) => state.sideMenu,
 };
 
 const actions = {
   async register({ commit, dispatch }, userData) {
     axios
-      .post("/auth/local/register", {
+      .post('/auth/local/register', {
         email: userData.email,
         username: userData.email,
         password: userData.password,
       })
       .then((res) => {
-        commit("setToken", res.data.jwt);
+        commit('setToken', res.data.jwt);
       })
       .catch((err) => {
-        commit("loginError", err.response.data.message[0].messages[0].message);
-      });
-  },
-  login({ commit }, userData) {
-    axios
-      .post("/auth/local", {
-        identifier: userData.email,
-        password: userData.password,
-      })
-      .then((res) => {
-        commit("setToken", res.data.jwt);
-      })
-      .catch((err) => {
-        commit("loginError", err.response.data.message[0].messages[0].message);
+        commit('loginError', err.response.data.message[0].messages[0].message);
       });
   },
   async createCabin({ commit, dispatch }, cabinInfo) {
@@ -67,23 +49,23 @@ const actions = {
       },
     });
     if (data.createCabin.cabin) {
-      dispatch("fetchCabinInfo", cabinInfo.name);
+      dispatch('fetchCabinInfo', cabinInfo.name);
     }
   },
   async joinCabin({ commit }, id) {
     const cabin = await getCabinById(id);
     if (cabin.data.cabin) {
       var isMember = cabin.data.cabin.not_approved_users.some(
-        (user) => user.id == state.userInfo.id
+        (user) => user.id == state.userInfo.id,
       );
       if (!isMember) {
         isMember = cabin.data.cabin.users.some(
-          (user) => user.id == state.userInfo.id
+          (user) => user.id == state.userInfo.id,
         );
       }
 
       if (isMember) {
-        commit("joinCabinError", "Du er allerede medlem av denne hytta");
+        commit('joinCabinError', 'Du er allerede medlem av denne hytta');
         return;
       } else {
         var cabinUsers = arrayOfUserIds(cabin.data.cabin.not_approved_users);
@@ -97,131 +79,38 @@ const actions = {
           not_approved_users: cabinUsers,
         },
       });
-      if (data.updateCabin.cabin) commit("setCabinJoined");
+      if (data.updateCabin.cabin) commit('setCabinJoined');
     } else {
       commit(
-        "joinCabinError",
-        "Ingen hytte funnet. Sjekk at du har fått riktig hytte-id"
+        'joinCabinError',
+        'Ingen hytte funnet. Sjekk at du har fått riktig hytte-id',
       );
     }
   },
-  async approveUser({ commit }) {
-    const data = await apolloClient.mutate({
-      mutation: queries.updateApprovedUsersQuery,
-      variables: {
-        id: state.selectedCabin.id,
-        users: arrayOfUserIds(state.selectedCabin.users),
-        not_approved_users: arrayOfUserIds(
-          state.selectedCabin.not_approved_users
-        ),
-      },
-    });
-  },
-  async fetchCabinInfo({ commit }, selectedCabin) {
-    const { data } = await apolloClient.query({
-      query: queries.cabinQuery,
-      fetchPolicy: "network-only",
-    });
-    if (data.self.cabins) {
-      commit("setCabins", data.self.cabins);
-      if (selectedCabin) {
-        const newCabin = data.self.cabins.find(
-          (findCabin) => (findCabin.name = selectedCabin)
-        );
-        commit("setCabin", newCabin);
-      } else if (state.selectedCabin) {
-        const newCabin = data.self.cabins.find(
-          (findCabin) => (findCabin.name = state.selectedCabin.name)
-        );
-        commit("setCabin", newCabin);
-      } else {
-        commit("setCabin", data.self.cabins[0]);
-      }
-    }
-    if (data.self.cabins_awaiting_approval) {
-      commit("setCabinsAwaitingApproval", data.self.cabins_awaiting_approval);
-    }
-  },
+
   async fetchUserInfo({ commit }) {
-    const { data } = await apolloClient.query({
-      query: queries.userQuery,
-      fetchPolicy: "network-only",
-    });
-    commit("setUserInfo", data.self);
-  },
-  async saveUserInfo({ commit }) {
-    const { data } = await apolloClient.mutate({
-      mutation: queries.updateUserInfoQuery,
-      variables: {
-        id: state.userInfo.id,
-        name: state.userInfo.name,
-      },
-    });
-    if (data.updateUser) commit("saved", true);
-  },
-  async updateCabinAbout({ commit }) {
-    const { data } = await apolloClient.mutate({
-      mutation: queries.updateCabinAboutQuery,
-      variables: {
-        id: state.selectedCabin.id,
-        name: state.selectedCabin.name,
-        about: state.selectedCabin.about,
-      },
-    });
-    if (data.updateCabin) commit("saved", true);
-  },
-  async updateShoppingList({ commit }) {
-    cleanQueryData("selectedCabin", "shopping_list");
-    const { data } = await apolloClient.mutate({
-      mutation: queries.updateShoppingListQuery,
-      variables: {
-        id: state.selectedCabin.id,
-        shopping_list: state.selectedCabin.shopping_list,
-      },
-    });
-  },
-  async updateFixedRoutines({ commit }) {
-    cleanQueryData("selectedCabin", "fixed_routines");
-    const { data } = await apolloClient.mutate({
-      mutation: queries.updateFixedRoutinesQuery,
-      variables: {
-        id: state.selectedCabin.id,
-        routines: state.selectedCabin.fixed_routines,
-      },
-    });
-  },
-  async updateBookings({ commit, dispatch }) {
-    cleanQueryData("selectedCabin", "bookings");
-    const { data } = await apolloClient.mutate({
-      mutation: queries.updateBookingsQuery,
-      variables: {
-        id: state.selectedCabin.id,
-        bookings: state.selectedCabin.bookings,
-      },
-    });
-    if (data.updateCabin) {
-      dispatch("fetchCabinInfo", state.selectedCabin.id);
-      commit("saved", true);
+    try {
+      const { data } = await apolloClient.query({
+        query: queries.userQuery,
+        fetchPolicy: 'network-only',
+      });
+      commit('setUserInfo', data.self);
+    } catch (error) {
+      commit('signOut');
     }
   },
-};
-
-// To update component
-const cleanQueryData = (prop, array) => {
-  // Remove __typename and change from object to id for userinfo
-  state[prop][array].forEach((item) => {
-    Object.keys(item).forEach((key) => {
-      if (item[key] && item[key].__typename) {
-        delete item[key].__typename;
-      }
-
-      // Remove userdata
-      if (item[key] && item[key].name && item[key].id) {
-        item[key] = item[key].id;
-      }
+  async updateCabin({ commit }, data) {
+    if (!data) return false;
+    const response = await axios({
+      method: 'put',
+      url: `/cabins/${state.selectedCabin.id}`,
+      headers: {
+        Authorization: `Bearer ${state.token}`,
+      },
+      data: data,
     });
-    delete item.__typename;
-  });
+    return response.data;
+  },
 };
 
 const getCabinById = async (id) => {
@@ -243,7 +132,7 @@ const arrayOfUserIds = (array) => {
 
 const mutations = {
   setToken: (state, token) => {
-    localStorage.setItem("token", token);
+    localStorage.setItem('token', token);
     state.token = token;
   },
   loginError: (state, error) => (state.loginError = error),
@@ -258,7 +147,8 @@ const mutations = {
         state[key] = null;
       }
     });
-    localStorage.removeItem("token");
+    localStorage.removeItem('token');
+    state.successMessage = 'Du er logget ut!';
   },
   saved: (state, saved) => {
     state.saved = saved;
@@ -268,6 +158,9 @@ const mutations = {
   },
   joinCabinError: (state, error) => (state.joinCabinError = error),
   setCabinJoined: (state) => (state.cabinJoined = true),
+  toggleLoginModal: (state, show) => (state.loginModal = show),
+  setSuccessMessage: (state, message) => (state.successMessage = message),
+  toggleSideMenu: (state, show) => (state.sideMenu = show),
 };
 
 export default {
