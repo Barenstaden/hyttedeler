@@ -12,7 +12,6 @@ moment.suppressDeprecationWarnings = true;
 Vue.use(moment);
 Vue.config.productionTip = false;
 
-import axios from 'axios';
 Vue.mixin({
   methods: {
     prettifyTime(time) {

@@ -1,6 +1,7 @@
 import { apolloClient } from '@/apollo';
 import queries from '@/queries/user.js';
 import axios from 'axios';
+import router from '@/router';
 
 const state = {
   token: localStorage.getItem('token') ? localStorage.getItem('token') : '',
@@ -9,8 +10,8 @@ const state = {
   successMessage: '',
   error: false,
   loginModal: false,
-  registerModal: false,
-  sideMenu: true,
+  sideMenu: false,
+  newUser: true,
 };
 
 const getters = {
@@ -21,73 +22,10 @@ const getters = {
   error: (state) => state.error,
   loginModal: (state) => state.loginModal,
   sideMenu: (state) => state.sideMenu,
+  newUser: (state) => state.newUser,
 };
 
 const actions = {
-  async register({ commit, dispatch }, userData) {
-    axios
-      .post('/auth/local/register', {
-        email: userData.email,
-        username: userData.email,
-        password: userData.password,
-      })
-      .then((res) => {
-        commit('setToken', res.data.jwt);
-      })
-      .catch((err) => {
-        commit('loginError', err.response.data.message[0].messages[0].message);
-      });
-  },
-  async createCabin({ commit, dispatch }, cabinInfo) {
-    const { data } = await apolloClient.mutate({
-      mutation: queries.createCabinQuery,
-      variables: {
-        name: cabinInfo.name,
-        about: cabinInfo.desc,
-        owner: state.userInfo.id,
-        users: [state.userInfo.id],
-      },
-    });
-    if (data.createCabin.cabin) {
-      dispatch('fetchCabinInfo', cabinInfo.name);
-    }
-  },
-  async joinCabin({ commit }, id) {
-    const cabin = await getCabinById(id);
-    if (cabin.data.cabin) {
-      var isMember = cabin.data.cabin.not_approved_users.some(
-        (user) => user.id == state.userInfo.id,
-      );
-      if (!isMember) {
-        isMember = cabin.data.cabin.users.some(
-          (user) => user.id == state.userInfo.id,
-        );
-      }
-
-      if (isMember) {
-        commit('joinCabinError', 'Du er allerede medlem av denne hytta');
-        return;
-      } else {
-        var cabinUsers = arrayOfUserIds(cabin.data.cabin.not_approved_users);
-        cabinUsers.push(state.userInfo.id);
-      }
-
-      const { data } = await apolloClient.mutate({
-        mutation: queries.joinCabinQuery,
-        variables: {
-          id: cabin.data.cabin.id,
-          not_approved_users: cabinUsers,
-        },
-      });
-      if (data.updateCabin.cabin) commit('setCabinJoined');
-    } else {
-      commit(
-        'joinCabinError',
-        'Ingen hytte funnet. Sjekk at du har fått riktig hytte-id',
-      );
-    }
-  },
-
   async fetchUserInfo({ commit }) {
     try {
       const { data } = await apolloClient.query({
@@ -99,35 +37,57 @@ const actions = {
       commit('signOut');
     }
   },
-  async updateCabin({ commit }, data) {
-    if (!data) return false;
-    const response = await axios({
-      method: 'put',
-      url: `/cabins/${state.selectedCabin.id}`,
-      headers: {
-        Authorization: `Bearer ${state.token}`,
+  async checkIfUserExists({ commit }, email) {
+    const response = await axios.get('/api/check-if-user-exists', {
+      params: {
+        email: email,
       },
-      data: data,
     });
     return response.data;
   },
-};
-
-const getCabinById = async (id) => {
-  return await apolloClient.query({
-    query: queries.cabinByIdQuery,
-    variables: {
-      id: id,
-    },
-  });
-};
-
-const arrayOfUserIds = (array) => {
-  var users = [];
-  array.forEach((user) => {
-    users.push(user.id);
-  });
-  return users;
+  async login({ commit }, data) {
+    try {
+      const response = await axios.post('/auth/local', {
+        identifier: data.email,
+        password: data.password,
+      });
+      console.log(response);
+      return response.data.jwt;
+    } catch (error) {
+      return error;
+    }
+  },
+  async register({ commit }, data) {
+    try {
+      const response = await axios.post('/auth/local/register', {
+        username: data.email,
+        email: data.email,
+        password: data.password,
+        added_by: data.added_by ? data.added_by : null,
+        change_password: data.change_password ? true : false,
+      });
+      console.log(response);
+      return response.data.jwt;
+    } catch (error) {
+      return false;
+    }
+  },
+  async update({ commit }, data) {
+    if (!data || !data.data) return false;
+    const stateData = (url) => {
+      if (url == 'cabins') return 'selectedCabin';
+      if (url == 'users') return 'userInfo';
+    };
+    const response = await axios({
+      method: 'put',
+      url: `/${data.url}/${state[stateData(data.url)].id}`,
+      headers: {
+        Authorization: `Bearer ${state.token}`,
+      },
+      data: data.data,
+    });
+    return response.data;
+  },
 };
 
 const mutations = {
@@ -137,9 +97,6 @@ const mutations = {
   },
   loginError: (state, error) => (state.loginError = error),
   setUserInfo: (state, userInfo) => (state.userInfo = userInfo),
-  setCabins: (state, cabins) => (state.cabins = cabins),
-  setCabinsAwaitingApproval: (state, cabins) =>
-    (state.cabinsAwaitingApproval = cabins),
   setCabin: (state, cabin) => (state.selectedCabin = cabin),
   signOut: (state) => {
     Object.keys(state).forEach((key) => {
@@ -148,7 +105,7 @@ const mutations = {
       }
     });
     localStorage.removeItem('token');
-    state.successMessage = 'Du er logget ut!';
+    if (router.app._route.name != 'Hjem') router.push('/');
   },
   saved: (state, saved) => {
     state.saved = saved;
@@ -156,11 +113,10 @@ const mutations = {
       state.saved = false;
     }, 2000);
   },
-  joinCabinError: (state, error) => (state.joinCabinError = error),
-  setCabinJoined: (state) => (state.cabinJoined = true),
   toggleLoginModal: (state, show) => (state.loginModal = show),
   setSuccessMessage: (state, message) => (state.successMessage = message),
   toggleSideMenu: (state, show) => (state.sideMenu = show),
+  setNewUser: (state, val) => (state.newUser = val),
 };
 
 export default {

@@ -93,6 +93,9 @@
         }
       `,
     },
+    created() {
+      if (!this.token) this.$apollo.queries.self.skip = true;
+    },
     methods: {
       signOut() {
         this.$store.commit('signOut');

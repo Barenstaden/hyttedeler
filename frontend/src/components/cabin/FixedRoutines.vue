@@ -50,7 +50,7 @@
             </transition-group>
           </draggable>
           <v-list-item>
-            <span v-if="!cabin.fixed_routines.length">
+            <span v-if="!cabin.fixed_routines || !cabin.fixed_routines.length">
               Du har ingen faste rutiner 👷🏼‍♀️
             </span>
             <span class="font-weight-bold" v-else>
@@ -108,15 +108,16 @@
       },
     },
     methods: {
-      ...mapActions(['updateCabin']),
+      ...mapActions(['update']),
       addRoutine() {
+        if (!this.routine) return;
         if (
           !this.cabin.fixed_routines.some(
             (routine) =>
               routine.name.toLowerCase() == this.routine.toLowerCase(),
           )
         ) {
-          this.cabin.fixed_routines.unshift({ name: this.routine });
+          this.cabin.fixed_routines.push({ name: this.routine });
           this.alreadyInList = '';
           this.updateFixedRoutines();
           this.routine = '';
@@ -135,10 +136,11 @@
         this.updateFixedRoutines();
       },
       async updateFixedRoutines() {
-        const response = await this.updateCabin({
+        const response = await this.update({
+          url: 'cabins',
           fixed_routines: this.cabin.fixed_routines,
         });
-        this.cabin.fixed_routines = response.fixed_routines
+        this.cabin.fixed_routines = response.fixed_routines;
       },
     },
     computed: {

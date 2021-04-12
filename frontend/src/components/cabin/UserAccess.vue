@@ -1,97 +1,106 @@
 <template>
-  <b-container>
-    <b-row>
-      <b-col md="6" offset-md="3" class="mb-5">
-        <b-alert show variant="success" class="mt-5">
-          <h4>
-            <strong>Din unike hytte-id er {{ selectedCabin.id }}</strong>
-          </h4>
-          <p>
-            Denne koden brukes ved å trykke på "Få tilgang til en hytte", og
-            fylle inn koden. De vil ikke kunne se andre detaljer enn navnet på
-            hytta frem til du godkjenner dem på denne siden.
-          </p>
-        </b-alert>
-        <h3 v-if="selectedCabin.not_approved_users.length" class="text-center">
-          Brukere som venter på tilgang
-        </h3>
-        <b-list-group>
-          <b-list-group-item
-            v-for="user in selectedCabin.not_approved_users"
-            :key="user.id"
-          >
-            <span class="pt-3">{{ user.name }}</span>
-            <md-button
-              class="md-primary mt-0 mb-0 float-right md-sm md-round"
-              @click="submitDeleteUser(user)"
-              >Slett</md-button
-            >
-            <md-button
-              class="md-success mt-0 mb-0 float-right md-sm md-round"
-              @click="submitApproveAccess(user)"
-              >Gi tilgang</md-button
-            >
-          </b-list-group-item>
-        </b-list-group>
-        <h3 v-if="selectedCabin.users.length" class="text-center">
-          Brukere med tilgang
-        </h3>
-        <b-list-group>
-          <b-list-group-item v-for="user in selectedCabin.users" :key="user.id">
-            <span class="pt-3">{{ user.name }}</span>
-            <md-button
-              v-if="userInfo.id != selectedCabin.owner.id"
-              class="md-primary mt-0 mb-0 float-right md-sm md-round"
-              @click="submitRemoveAccess(user)"
-              >Fjern tilgang</md-button
-            >
-            <span v-if="userInfo.id == user.id"> (Deg)</span>
-          </b-list-group-item>
-        </b-list-group>
-      </b-col>
-    </b-row>
-  </b-container>
+  <v-container v-if="cabin">
+    <v-row justify="center">
+      <v-col md="6">
+        <v-card>
+          <v-card-title>
+            Brukere av hytta
+          </v-card-title>
+          <v-list-item v-for="user in cabin.users" :key="user.id">
+            <v-list-item-content>
+              {{ user.name ? user.name : user.email }}
+            </v-list-item-content>
+          </v-list-item>
+
+          <!-- Legg til bruker -->
+          <v-list-item>
+            <v-list-item-content>
+              <v-form @submit.prevent="addUser">
+                <v-text-field
+                  outlined
+                  label="Legg til en bruker"
+                  type="email"
+                  append-outer-icon="mdi-plus"
+                  @click:append-outer="submitAddUser"
+                  hint="Skriv inn e-posten til brukeren du ønsker å legge til"
+                  v-model="userToAdd"
+                >
+                </v-text-field>
+              </v-form>
+            </v-list-item-content>
+          </v-list-item>
+        </v-card>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <script>
-import { mapActions, mapGetters } from "vuex";
-export default {
-  methods: {
-    ...mapActions(["approveUser"]),
-    submitApproveAccess(user) {
-      this.selectedCabin.users.push(user);
-      this.selectedCabin.not_approved_users.splice(
-        this.selectedCabin.not_approved_users.findIndex(
-          cabinUser => cabinUser.id == user.id
-        ),
-        1
-      );
-      this.approveUser();
+  import gql from 'graphql-tag';
+  import axios from 'axios';
+  import { mapActions, mapGetters } from 'vuex';
+  export default {
+    data() {
+      return {
+        userToAdd: '',
+      };
     },
-    submitRemoveAccess(user) {
-      this.selectedCabin.not_approved_users.push(user);
-      this.selectedCabin.users.splice(
-        this.selectedCabin.users.findIndex(
-          cabinUser => cabinUser.id == user.id
-        ),
-        1
-      );
-      this.approveUser();
+    apollo: {
+      cabin: {
+        query: gql`
+          query cabin($id: ID!) {
+            cabin(id: $id) {
+              id
+              users {
+                id
+                name
+                email
+                confirmed
+              }
+            }
+          }
+        `,
+        variables() {
+          return {
+            id: this.$route.params.cabin,
+          };
+        },
+      },
     },
-    submitDeleteUser(user) {
-      this.selectedCabin.not_approved_users.splice(
-        this.selectedCabin.not_approved_users.findIndex(
-          cabinUser => cabinUser.id == user.id
-        ),
-        1
-      );
-      this.approveUser();
-    }
-  },
-  computed: {
-    ...mapGetters(["selectedCabin", "userInfo"])
-  }
-};
+    methods: {
+      ...mapActions(['update', 'checkIfUserExists', 'register']),
+      async submitAddUser() {
+        const userId = await this.checkIfUserExists(this.userToAdd);
+        if (!userId) {
+          const response = await this.register({
+            email: this.userToAdd,
+            password: this.token,
+            added_by: this.userInfo.id,
+          });
+          this.addUser(response.data.user.id);
+        } else {
+          this.addUser(userId);
+        }
+      },
+      async addUser(id) {
+        const users = this.cabin.users.reduce((arr, user) => {
+          arr.push(user.id);
+          return arr;
+        }, []);
+        users.push(id);
+        console.log(users);
+        const userAdded = await this.update({
+          url: 'cabins',
+          data: {
+            users: users,
+          },
+        });
+        this.userToAdd = '';
+        this.$apollo.queries.cabin.refetch();
+      },
+    },
+    computed: mapGetters(['token', 'userInfo']),
+  };
 </script>
 
 <style></style>

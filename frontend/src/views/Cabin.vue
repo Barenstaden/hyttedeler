@@ -42,7 +42,6 @@
 
 <script>
   import gql from 'graphql-tag';
-  import { mapActions } from 'vuex';
   export default {
     data() {
       return {

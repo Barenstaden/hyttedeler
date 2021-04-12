@@ -26,16 +26,21 @@
             >
               <div>
                 <div class="font-weight-normal">
-                  <strong>{{ prettifyTime(booking.start) }}</strong>
+                  <strong
+                    >{{ prettifyTime(booking.start) }} -
+                    {{ prettifyTime(booking.end) }}</strong
+                  >
                 </div>
-                <div>{{ booking.user.name }}</div>
+                <div>
+                  {{ bookingLength(booking) }} dager · {{ booking.user.name }}
+                </div>
               </div>
             </v-timeline-item>
           </v-timeline>
 
           <v-row class="mt-5 pb-8">
             <v-btn small rounded class="primary mx-auto" to="calendar"
-              >Gå til kalender</v-btn
+              >Legg til en tur</v-btn
             >
           </v-row>
         </v-card>
@@ -70,7 +75,7 @@
       </v-col>
 
       <!-- Users -->
-      <v-col md="4">
+      <v-col md="4" v-if="cabin.users.length">
         <v-card>
           <v-card-text>
             <v-card-title>
@@ -141,6 +146,11 @@
             id: this.$route.params.cabin,
           };
         },
+      },
+    },
+    methods: {
+      bookingLength(booking) {
+        return moment(booking.end).diff(booking.start, 'days');
       },
     },
     computed: {

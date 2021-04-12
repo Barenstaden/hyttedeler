@@ -1,9 +1,9 @@
 <template>
   <v-app>
     <Navigation />
-    <LoginModal />
+    <LoginModal v-if="!userInfo" />
     <v-main>
-      <SideMenu />
+      <SideMenu v-if="userInfo" />
       <SuccessMessage />
       <router-view />
     </v-main>
@@ -11,6 +11,7 @@
 </template>
 
 <script>
+  import { mapGetters } from 'vuex';
   export default {
     name: 'App',
     components: {
@@ -19,8 +20,6 @@
       LoginModal: () => import('@/components/app/LoginModal.vue'),
       SuccessMessage: () => import('@/components/app/SuccessMessage.vue'),
     },
-    data: () => ({
-      //
-    }),
+    computed: mapGetters(['userInfo']),
   };
 </script>

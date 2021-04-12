@@ -145,7 +145,7 @@
       },
     },
     methods: {
-      ...mapActions(['updateCabin']),
+      ...mapActions(['update']),
       addItem() {
         if (!this.item) return;
         if (
@@ -182,8 +182,11 @@
         this.updateShoppingList();
       },
       async updateShoppingList() {
-        const response = await this.updateCabin({
-          shopping_list: this.cabin.shopping_list,
+        const response = await this.update({
+          url: 'cabins',
+          data: {
+            shopping_list: this.cabin.shopping_list,
+          },
         });
         if (response) this.cabin.shopping_list = response.shopping_list;
       },

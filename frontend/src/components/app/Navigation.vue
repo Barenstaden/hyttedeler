@@ -1,14 +1,13 @@
 <template>
   <v-app-bar app color="error" dark>
     <v-app-bar-nav-icon @click="toggleSideMenu"></v-app-bar-nav-icon>
-    <v-toolbar-title>Hyttedeler</v-toolbar-title>
+    <v-toolbar-title>
+      <v-btn text to="/">Hyttedeler</v-btn>
+    </v-toolbar-title>
     <v-spacer></v-spacer>
     <div v-if="!userInfo">
       <v-btn rounded class="success" @click="loginModal">
         Logg inn
-      </v-btn>
-      <v-btn rounded class="primary ml-3" @click="registerModal">
-        Ny bruker
       </v-btn>
     </div>
     <div v-else>
@@ -30,15 +29,12 @@
   import { mapActions, mapGetters } from 'vuex';
   export default {
     created() {
-      this.fetchUserInfo();
+      if (this.token) this.fetchUserInfo();
     },
     methods: {
       ...mapActions(['fetchUserInfo']),
       loginModal() {
         this.$store.commit('toggleLoginModal', true);
-      },
-      registerModal() {
-        this.$store.commite('toggleRegisterModal', true);
       },
       signOut() {
         this.$store.commit('signOut');
@@ -47,7 +43,15 @@
         this.$store.commit('toggleSideMenu', !this.sideMenu);
       },
     },
-    computed: mapGetters(['userInfo', 'sideMenu']),
+    computed: mapGetters(['userInfo', 'sideMenu', 'token']),
+    watch: {
+      token() {
+        if (!this.userInfo) this.fetchUserInfo();
+      },
+      userInfo() {
+        if (!this.userInfo.name) this.$store.commit('setNewUser', true);
+      },
+    },
   };
 </script>
 

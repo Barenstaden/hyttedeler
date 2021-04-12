@@ -15,9 +15,9 @@
       "type": "string"
     },
     "owner": {
+      "via": "owned_cabins",
       "plugin": "users-permissions",
-      "model": "user",
-      "via": "owned_cabins"
+      "model": "user"
     },
     "bookings": {
       "type": "component",
@@ -38,15 +38,15 @@
       "component": "shopping-list.shopping-list"
     },
     "not_approved_users": {
+      "via": "cabins_awaiting_approval",
       "plugin": "users-permissions",
       "collection": "user",
-      "via": "cabins_awaiting_approval",
       "dominant": true
     },
     "users": {
+      "via": "cabins",
       "plugin": "users-permissions",
       "collection": "user",
-      "via": "cabins",
       "dominant": true
     },
     "image": {

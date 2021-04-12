@@ -22,8 +22,12 @@ export default new Router({
       component: () => import('./views/Cabins.vue'),
     },
     {
+      path: '/welcome',
+      name: 'Velkommen til hyttedeler',
+      component: () => import('./views/Welcome.vue'),
+    },
+    {
       path: '/cabins/:cabin/',
-      name: 'Hytte',
       component: () => import('./views/Cabin.vue'),
       children: [
         {
@@ -57,6 +61,11 @@ export default new Router({
           component: () => import('./components/cabin/UserAccess.vue'),
         },
       ],
+    },
+    {
+      path: '/new-cabin',
+      name: 'New cabin',
+      component: () => import('./views/Cabins.vue'),
     },
     {
       path: '/profil',

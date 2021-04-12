@@ -33,6 +33,11 @@
         @click:event="showEvent"
       >
       </v-calendar>
+      <v-col class="text-right">
+        <p class="my-0 mb-n4 green--text">
+          Trykk på en dato for å starte 📅
+        </p>
+      </v-col>
 
       <v-menu
         v-model="selectedOpen"
@@ -81,9 +86,23 @@
         @click="updateBookings(cabin.bookings)"
         >Lagre</v-btn
       >
-      <v-btn small rounded class="error mt-4" @click="addBooking(null)"
+      <v-btn
+        :disabled="!this.selectedStart || !this.selectedEnd"
+        small
+        rounded
+        class="error mt-4"
+        @click="addBooking(null)"
         >Fjern valg</v-btn
       >
+      <v-snackbar
+        v-model="saved"
+        color="success"
+        :timeout="timeout"
+        outlined
+        right
+      >
+        Turen ble lagret!
+      </v-snackbar>
     </v-row>
   </v-container>
 </template>
@@ -103,10 +122,12 @@
         currentMonth: moment().format('MMMM YYYY'),
         selectedStart: null,
         selectedEnd: null,
+        saved: true,
+        timeout: 2000,
       };
     },
     methods: {
-      ...mapActions(['updateCabin']),
+      ...mapActions(['update']),
       addBooking(date) {
         if (!date) {
           this.selectedStart = null;
@@ -139,8 +160,11 @@
         }
       },
       async updateBookings(bookings) {
-        const response = await this.updateCabin({
-          bookings: bookings,
+        const response = await this.update({
+          url: 'cabins',
+          data: {
+            bookings: bookings,
+          },
         });
         this.cabin.bookings = response.bookings;
         this.addBooking(null);

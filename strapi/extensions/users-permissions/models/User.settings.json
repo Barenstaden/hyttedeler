@@ -74,16 +74,20 @@
       "required": false
     },
     "owned_cabins": {
-      "via": "owner",
-      "collection": "cabin"
+      "collection": "cabin",
+      "via": "owner"
     },
     "cabins": {
-      "via": "users",
-      "collection": "cabin"
+      "collection": "cabin",
+      "via": "users"
     },
     "cabins_awaiting_approval": {
-      "via": "not_approved_users",
-      "collection": "cabin"
+      "collection": "cabin",
+      "via": "not_approved_users"
+    },
+    "added_by": {
+      "plugin": "users-permissions",
+      "model": "user"
     }
   }
 }

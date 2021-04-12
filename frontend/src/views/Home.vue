@@ -10,23 +10,28 @@
         <v-row>
           <div class="mx-auto">
             <h1>{{ frontPage.main_header }}</h1>
-            <v-btn rounded class="mt-3" color="error">
+            <v-btn rounded class="mt-3" color="error" v-if="!userInfo">
               {{ frontPage.main_button }}
             </v-btn>
           </div>
         </v-row>
       </v-container>
     </v-parallax>
-    <FrontPageAbout />
+    <FrontPageAbout v-if="!userInfo" />
+    <Cabins v-if="userInfo && !newUser" />
+    <Welcome v-if="userInfo && newUser" />
   </div>
 </template>
 
 <script>
   import gql from 'graphql-tag';
+  import { mapGetters } from 'vuex';
   export default {
     name: 'Home',
     components: {
       FrontPageAbout: () => import('@/components/FrontPageAbout.vue'),
+      Cabins: () => import('@/views/Cabins.vue'),
+      Welcome: () => import('@/views/Welcome.vue'),
     },
     apollo: {
       frontPage: {
@@ -44,5 +49,6 @@
         `,
       },
     },
+    computed: mapGetters(['userInfo', 'newUser']),
   };
 </script>

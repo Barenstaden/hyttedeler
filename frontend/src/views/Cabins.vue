@@ -1,10 +1,11 @@
 <template>
   <v-container>
-    <v-row v-if="self" justify="center">
+    <v-row v-if="self">
       <v-col cols="12" class="text-center mt-10">
         <h1>Mine hytter</h1>
       </v-col>
-      <v-col md="3" v-for="cabin in self.cabins" :key="cabin.id">
+
+      <v-col md="4" v-for="cabin in self.cabins" :key="cabin.id">
         <v-card @click="setSelectedCabin(cabin)">
           <v-img
             v-if="cabin.image"
@@ -20,12 +21,18 @@
           ></v-img>
           <v-card-title>{{ cabin.name }}</v-card-title>
           <v-card-text>
-            <span v-if="upcomingBookings(cabin)"
-              >{{ upcomingBookings(cabin) }} planlagte turer</span
-            >
+            <span v-if="upcomingBookings(cabin)">{{
+              upcomingBookings(cabin) > 1
+                ? upcomingBookings(cabin) + ' planlagte turer'
+                : 'Én planlagt tur'
+            }}</span>
             <span v-else>Ingen planlagte turer</span>
           </v-card-text>
         </v-card>
+      </v-col>
+
+      <v-col md="4" :offset-md="self.cabins.length ? '' : '4'">
+        <NewCabin @cabinAdded="proceedToCabin" />
       </v-col>
     </v-row>
   </v-container>
@@ -36,6 +43,9 @@
   import moment from 'moment';
   import gql from 'graphql-tag';
   export default {
+    components: {
+      NewCabin: () => import('@/components/cabin/NewCabin.vue'),
+    },
     apollo: {
       self: gql`
         query {
@@ -70,9 +80,14 @@
           moment(booking.start).isAfter(new Date()),
         ).length;
       },
+      proceedToCabin(cabin) {
+        console.log(cabin);
+        this.self.cabins.push(cabin);
+        this.$router.push(`/cabins/${cabin.id}/`);
+      },
     },
     computed: {
-      ...mapGetters(['selectedCabin']),
+      ...mapGetters(['selectedCabin', 'newUser']),
     },
   };
 </script>
